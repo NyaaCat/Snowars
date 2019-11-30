@@ -1,0 +1,51 @@
+plugins {
+    id 'java'
+}
+
+group 'NyaaCat'
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+    maven {
+        name 'Spigot'
+        url 'https://hub.spigotmc.org/nexus/content/groups/public/'
+    }
+    maven {
+        name 'NyaaCat'
+        url 'https://ci.nyaacat.com/maven/'
+    }
+    maven {
+        name 'NyaaCentral'
+        url 'https://raw.githubusercontent.com/NyaaCat/NyaaCentral/maven-repo'
+    }
+    maven {
+        name 'sk89q'
+        url "http://maven.sk89q.com/repo/"
+    }
+    maven {
+        name 'ProtocolLib'
+        url "http://repo.dmulloy2.net/nexus/repository/public/"
+    }
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = "UTF-8"
+}
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+    compile('cat.nyaa:nyaacore:7.0-SNAPSHOT')
+    compileOnly "org.spigotmc:spigot-api:1.14.4-R0.1-SNAPSHOT"
+
+    implementation 'cat.nyaa:LangUtils:2.1-SNAPSHOT'
+    implementation('com.sk89q.worldguard:worldguard-core:7.0.0-SNAPSHOT')
+    implementation('com.sk89q.worldguard:worldguard-legacy:7.0.0-SNAPSHOT') {
+        exclude group: 'io.papermc', module: 'paperlib'
+        exclude group: 'org.bstats', module: 'bstats-bukkit'
+        exclude group: 'org.bukkit', module: 'bukkit'
+    }
+    compileOnly group: "com.comphenix.protocol", name: "ProtocolLib", version: "4.4.0"
+}

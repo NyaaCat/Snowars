@@ -1,0 +1,23 @@
+name: Snowars
+main: cat.nyaa.snowars.SnowarsPlugin
+description: "SnowarsPlugin"
+version: 1.0
+depend: [NyaaCore,LangUtils]
+softdepend: [WorldGuard,NyaaUtils]
+authors: [ReinWD]
+website: "https://github.com/NyaaCat/Snowars"
+database: false
+api-version: 1.14
+
+commands:
+  snowars:
+    description: "main command for infinite infernal plugin."
+    aliases: [sw]
+    permission: "sw.command"
+    permission-message: "You don't have required permission <permission>"
+
+
+permissions:
+  sw.command:
+    description: "main permissions for infinite infernal plugin."
+    default: true
