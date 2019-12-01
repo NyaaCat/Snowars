@@ -5,10 +5,16 @@ import org.bukkit.plugin.Plugin;
 
 public class I18n extends LanguageRepository {
     private String lang = "en_US";
+    private static I18n INSTANCE;
 
     public I18n(String language) {
         lang = language;
         this.load();
+        INSTANCE = this;
+    }
+
+    public static String format(String s, Object... args) {
+        return INSTANCE.getFormatted(s, args);
     }
 
     @Override

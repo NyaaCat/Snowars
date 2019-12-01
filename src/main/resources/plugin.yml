@@ -11,7 +11,7 @@ api-version: 1.14
 
 commands:
   snowars:
-    description: "main command for infinite infernal plugin."
+    description: "main command for this plugin."
     aliases: [sw]
     permission: "sw.command"
     permission-message: "You don't have required permission <permission>"
@@ -19,5 +19,5 @@ commands:
 
 permissions:
   sw.command:
-    description: "main permissions for infinite infernal plugin."
-    default: true
+    description: "main permissions for this plugin."
+    default: op

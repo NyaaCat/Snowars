@@ -1,1 +1,34 @@
 language: en_US
+itemConfigs:
+  normal:
+    __class__: cat.nyaa.snowars.config.ItemConfigs
+    id: normal
+    name: 普通雪球
+    lore:
+      - '&aNormal item'
+    behavior: normal
+    material: SNOWBALL
+  sniper:
+    __class__: cat.nyaa.snowars.config.ItemConfigs
+    id: sniper
+    name: 狙击雪球
+    lore:
+      - '&aSniper item'
+    behavior: sniper
+    material: SNOWBALL
+  splited:
+    __class__: cat.nyaa.snowars.config.ItemConfigs
+    id: splited
+    name: 分裂雪球
+    lore:
+      - '&aSplited item'
+    behavior: splited
+    material: SNOWBALL
+  mine:
+    __class__: cat.nyaa.snowars.config.ItemConfigs
+    id: mine
+    name: 地雷放置器
+    lore:
+      - '&aMine item'
+    behavior: mine
+    material: ARMOR_STAND

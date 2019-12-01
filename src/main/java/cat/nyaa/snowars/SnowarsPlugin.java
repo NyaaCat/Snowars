@@ -1,5 +1,7 @@
 package cat.nyaa.snowars;
 
+import cat.nyaa.snowars.event.Ticker;
+import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class SnowarsPlugin extends JavaPlugin {
@@ -14,15 +16,19 @@ public class SnowarsPlugin extends JavaPlugin {
         super.onEnable();
         plugin = this;
         configurations = new Configurations();
+        configurations.reload();
         events = new Events();
         i18n = new I18n(configurations.language);
         commands = new Commands(this, i18n);
+        Ticker.getInstance().init();
     }
 
     @Override
     public void onDisable() {
         super.onDisable();
         plugin = null;
+        Ticker.getInstance().stop();
+
     }
 
 

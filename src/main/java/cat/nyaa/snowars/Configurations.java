@@ -1,12 +1,20 @@
 package cat.nyaa.snowars;
 
 import cat.nyaa.nyaacore.configuration.PluginConfigure;
+import cat.nyaa.snowars.config.ItemConfigs;
+import cat.nyaa.snowars.item.ItemManager;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class Configurations extends PluginConfigure {
 
     @Serializable
     public String language = "en_US";
+
+    @Serializable
+    public Map<String, ItemConfigs> itemConfigs = new HashMap<>();
 
     @Override
     protected JavaPlugin getPlugin() {
@@ -15,5 +23,6 @@ public class Configurations extends PluginConfigure {
 
     public void reload(){
         this.load();
+        ItemManager.load(this);
     }
 }
