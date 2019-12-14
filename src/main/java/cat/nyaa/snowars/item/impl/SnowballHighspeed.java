@@ -1,6 +1,7 @@
 package cat.nyaa.snowars.item.impl;
 
 import cat.nyaa.snowars.item.AbstractSnowball;
+import cat.nyaa.snowars.utils.Utils;
 import org.bukkit.Location;
 import org.bukkit.Sound;
 import org.bukkit.block.Block;
@@ -11,14 +12,13 @@ import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.scoreboard.Team;
 
-public class SnowballSniper extends AbstractSnowball {
-
+public class SnowballHighspeed extends AbstractSnowball {
     @Override
     public boolean onUse(LivingEntity from, PlayerInteractEvent event) {
-        launchSnowball(this, from, null, from.getEyeLocation().getDirection(), 1, 2.5d, false);
-        Location soundLocation = from.getEyeLocation();
-        from.getWorld().playSound(soundLocation, Sound.ENTITY_SNOWBALL_THROW, 0.5f, 1f);
-        from.getWorld().playSound(soundLocation, Sound.ENTITY_DRAGON_FIREBALL_EXPLODE, 0.5f, 2f);
+        Location fromEyeLocation = from.getEyeLocation();
+        Projectile projectile = launchSnowball(this, from, null, fromEyeLocation.getDirection(), 1, 5, false);
+        from.getWorld().playSound(from.getLocation(), Sound.ENTITY_FIREWORK_ROCKET_LAUNCH, 0.5f, 1f);
+        Utils.removeLater(projectile, 3);
         return true;
     }
 
@@ -33,14 +33,16 @@ public class SnowballSniper extends AbstractSnowball {
     }
 
     @Override
-    public double getHitScore(Entity fromEntity, Entity hitEntity, Team from, Team hit) {
-        try {
-            double distance = fromEntity.getLocation().distance(hitEntity.getLocation());
-            int score = distance > 20 ? 5 : 1;
-            return zeroOr(from, hit, score);
-        }catch (Exception e) {
-            return 1;
+    public void onHitEntity(Entity from, Entity related, Entity hit, ProjectileHitEvent event) {
+        if (hit instanceof LivingEntity) {
+            ((LivingEntity) hit).setNoDamageTicks(0);
         }
+        super.onHitEntity(from, related, hit, event);
+    }
+
+    @Override
+    public double getHitScore(Entity fromEntity, Entity hitEntity, Team from, Team hit) {
+        return zeroOr(from, hit, 1);
     }
 
     @Override

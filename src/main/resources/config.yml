@@ -1,34 +1,92 @@
 language: en_US
 itemConfigs:
+  mine:
+    __class__: cat.nyaa.snowars.config.ItemConfigs
+    id: mine
+    name: '&a地雷雪球'
+    lore:
+      - '&amine item'
+    behavior: mine
+    material: ARMOR_STAND
+  pigeon:
+    __class__: cat.nyaa.snowars.config.ItemConfigs
+    id: pigeon
+    name: '&e咕咕咕雪球'
+    lore:
+      - '&e&m这个雪球的说明咕了'
+    behavior: pigeon
+    material: SNOWBALL
   normal:
     __class__: cat.nyaa.snowars.config.ItemConfigs
     id: normal
-    name: 普通雪球
+    name: '&a普通雪球'
     lore:
       - '&aNormal item'
     behavior: normal
     material: SNOWBALL
+  rain:
+    __class__: cat.nyaa.snowars.config.ItemConfigs
+    id: rain
+    name: '&a雨雪球'
+    lore:
+      - '&aRain item'
+    behavior: rain
+    material: SNOWBALL
   sniper:
     __class__: cat.nyaa.snowars.config.ItemConfigs
     id: sniper
-    name: 狙击雪球
+    name: '&a狙击雪球'
     lore:
       - '&aSniper item'
     behavior: sniper
     material: SNOWBALL
+  gravity:
+    __class__: cat.nyaa.snowars.config.ItemConfigs
+    id: gravity
+    name: '&a黑洞雪球'
+    lore:
+      - '&aGravity item'
+    behavior: gravity
+    material: SNOWBALL
+  cucumber:
+    __class__: cat.nyaa.snowars.config.ItemConfigs
+    id: cucumber
+    name: '&a黄瓜雪球'
+    lore:
+      - '&aCucumber item'
+    behavior: cucumber
+    material: SEA_PICKLE
   splited:
     __class__: cat.nyaa.snowars.config.ItemConfigs
     id: splited
-    name: 分裂雪球
+    name: '&a分裂雪球'
     lore:
       - '&aSplited item'
     behavior: splited
     material: SNOWBALL
-  mine:
+  golden:
     __class__: cat.nyaa.snowars.config.ItemConfigs
-    id: mine
-    name: 地雷放置器
+    id: golden
+    name: '&e黄金雪球'
     lore:
-      - '&aMine item'
-    behavior: mine
-    material: ARMOR_STAND
+      - '&aHigh Speed item'
+      - '&e黄  金  体  验'
+    behavior: golden
+    material: SNOWBALL
+  justice:
+    __class__: cat.nyaa.snowars.config.ItemConfigs
+    id: justice
+    name: '&e正义雪球'
+    lore:
+      - '&e吾心吾行澄如明镜'
+      - '&e所作所为皆为正义'
+    behavior: justice
+    material: SNOWBALL
+  highspeed:
+    __class__: cat.nyaa.snowars.config.ItemConfigs
+    id: highspeed
+    name: '&a高速雪球'
+    lore:
+      - '&aHigh Speed item'
+    behavior: highspeed
+    material: SNOWBALL

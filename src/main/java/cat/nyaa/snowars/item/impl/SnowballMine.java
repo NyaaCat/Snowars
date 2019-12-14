@@ -2,6 +2,7 @@ package cat.nyaa.snowars.item.impl;
 
 import cat.nyaa.nyaacore.Message;
 import cat.nyaa.snowars.I18n;
+import cat.nyaa.snowars.event.TickTask;
 import cat.nyaa.snowars.item.AbstractSnowball;
 import cat.nyaa.snowars.utils.Utils;
 import org.bukkit.*;
@@ -44,63 +45,73 @@ public class SnowballMine extends AbstractSnowball {
         });
 
         Scoreboard mainScoreboard = from.getServer().getScoreboardManager().getMainScoreboard();
-        Team ownerTeam = getTeam(mainScoreboard, from);
+        Team ownerTeam = Utils.getTeam(mainScoreboard, from);
         AtomicBoolean triggered = new AtomicBoolean(false);
-        registerTickEvent(from, armor, new BukkitRunnable() {
+        registerDelayedEvent(from, armor, 20, new BukkitRunnable() {
             @Override
             public void run() {
-                List<Entity> nearbyEntities = armor.getNearbyEntities(2, 2, 2);
-                if (from instanceof Player) {
-                    ((Player) from).spawnParticle(Particle.REDSTONE, armor.getEyeLocation(), 1, 0.5, 0.5, 0.5, 1, dustOptions);
-                }
-                if (nearbyEntities.stream().anyMatch(entity -> {
-                    Team t = null;
-                    return armor.getEyeLocation().distance(entity.getLocation()) < 1
-                            && entity instanceof LivingEntity
-                            && !(entity instanceof ArmorStand)
-                            && (t = getTeam(mainScoreboard, entity)) != null
-                            && !Objects.equals(t, ownerTeam);
-                })) {
-                    trigger(from, armor);
-                }
-            }
-
-            private void trigger(LivingEntity from, ArmorStand armor) {
-                armor.teleport(armor.getLocation().add(0, 1, 0));
-                armor.setGravity(false);
-                armor.setMarker(true);
-                Location eyeLocation = armor.getEyeLocation();
-                int count = ThreadLocalRandom.current().nextInt(10) + 20;
-                triggered.set(true);
-                for (int i = 0; i < count; i++) {
-                    int finalI = i;
-                    registerDelayedEvent(from, armor, i * 2, new BukkitRunnable() {
-                        @Override
-                        public void run() {
-                            if (finalI % 5 ==0){
-                                world.spawnParticle(Particle.CLOUD, eyeLocation, 20, 0.5, 0.5, 0.5, 0.3);
-                                world.playSound(targetBlock.getLocation(), Sound.BLOCK_BELL_USE, 1f, 1.5f);
-                            }
-                            launchSnowball(SnowballMine.this, from, eyeLocation, y_axis, 60, 0.5, true);
+                registerTickEvent(from, armor, new TickTask(tickevent -> triggered.get() || armor.isDead()) {
+                    @Override
+                    public void run(int ticked) {
+                        List<Entity> nearbyEntities = armor.getNearbyEntities(2, 2, 2);
+                        if (from instanceof Player) {
+                            ((Player) from).spawnParticle(Particle.REDSTONE, armor.getEyeLocation(), 1, 0.5, 0.5, 0.5, 1, dustOptions);
                         }
-                    }, event -> true);
-                }
-                new Message("").append(I18n.format("snowball.mine.triggered")).send(from);
-                Utils.removeLater(armor, 2 * count);
+                        if (nearbyEntities.stream().anyMatch(entity -> {
+                            Team t = null;
+                            return armor.getEyeLocation().distance(entity.getLocation()) < 1
+                                    && entity instanceof LivingEntity
+                                    && !(entity instanceof ArmorStand)
+                                    && !Objects.equals(Utils.getTeam(mainScoreboard, entity), ownerTeam);
+                        })) {
+                            trigger(from, armor);
+                        }
+                    }
+
+                    private void trigger(LivingEntity from, ArmorStand armor) {
+                        armor.teleport(armor.getLocation().add(0, 1, 0));
+                        armor.setGravity(false);
+                        armor.setMarker(true);
+                        Location eyeLocation = armor.getEyeLocation();
+                        int count = ThreadLocalRandom.current().nextInt(10) + 20;
+                        triggered.set(true);
+                        for (int i = 0; i < count; i++) {
+                            world.spawnParticle(Particle.CLOUD, eyeLocation, 20, 0.5, 0.5, 0.5, 0.3);
+                            registerDelayedEvent(from, armor, 2 * i, new BukkitRunnable() {
+                                @Override
+                                public void run() {
+                                    world.playSound(targetBlock.getLocation(), Sound.BLOCK_BELL_USE, 1f, 1.5f);
+                                }
+                            }, delayedTriggerEvent -> true);
+                            launchSnowball(SnowballMine.this, from, eyeLocation, y_axis, 30, 0.5, true);
+                        }
+                        new Message("").append(I18n.format("snowball.mine.triggered")).send(from);
+                        Utils.removeLater(armor, 2 * count);
+                    }
+                });
             }
-        }, tickevent -> triggered.get() || armor.isDead());
+        }, event1 -> !armor.isDead());
+
         new Message("").append(I18n.format("snowball.mine.success")).send(from);
         return true;
     }
 
     @Override
-    public void onLaunch(Entity from, Snowball event) {
+    public void onLaunch(Entity from, Projectile projectile) {
+        projectile.setTicksLived(5);
+    }
+
+    @Override
+    public void onHitBlock(Entity from, Entity related, Block hit, ProjectileHitEvent event) {
 
     }
 
     @Override
-    public void onHitBlock(Entity from, Entity hit, ProjectileHitEvent event) {
-
+    public void onHitEntity(Entity from, Entity related, Entity hit, ProjectileHitEvent event) {
+        if (hit instanceof LivingEntity) {
+            ((LivingEntity) hit).setNoDamageTicks(0);
+        }
+        super.onHitEntity(from, related, hit, event);
     }
 
     @Override
@@ -109,7 +120,12 @@ public class SnowballMine extends AbstractSnowball {
     }
 
     @Override
-    public int getHitScore(Entity fromEntity, Entity hitEntity, Team from, Team hit) {
-        return 0;
+    public double getHitScore(Entity fromEntity, Entity hitEntity, Team from, Team hit) {
+        return zeroOr(from, hit, 1);
+    }
+
+    @Override
+    public double getDamage(Entity fromEntity, Entity hitEntity, Team from, Team hit) {
+        return zeroOr(from, hit, 10);
     }
 }

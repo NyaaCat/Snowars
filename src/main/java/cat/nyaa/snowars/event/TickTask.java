@@ -5,14 +5,11 @@ import org.bukkit.scheduler.BukkitRunnable;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-public class TickTask {
-    private final BukkitRunnable runnable;
-    private BukkitRunnable task;
+public abstract class TickTask extends BukkitRunnable{
     private int tickedTimes = 0;
     private Predicate<TickEvent> predicate;
 
-    public TickTask(BukkitRunnable runnable, Predicate<TickEvent> shouldRemove) {
-        this.runnable = runnable;
+    public TickTask(Predicate<TickEvent> shouldRemove) {
         predicate = shouldRemove;
     }
 
@@ -26,7 +23,15 @@ public class TickTask {
         return predicate;
     }
 
-    public BukkitRunnable getRunnable() {
-        return runnable;
+    @Override
+    public void run() {
+        int ticked = getTicked();
+        this.run(ticked);
+    }
+
+    public abstract void run(int ticked);
+
+    private int getTicked() {
+        return tickedTimes;
     }
 }

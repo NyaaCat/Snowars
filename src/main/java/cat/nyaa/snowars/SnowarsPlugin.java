@@ -1,6 +1,7 @@
 package cat.nyaa.snowars;
 
 import cat.nyaa.snowars.event.Ticker;
+import cat.nyaa.snowars.ui.HealthUi;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -21,6 +22,7 @@ public class SnowarsPlugin extends JavaPlugin {
         i18n = new I18n(configurations.language);
         commands = new Commands(this, i18n);
         Ticker.getInstance().init();
+        HealthUi.getInstance().start();
     }
 
     @Override

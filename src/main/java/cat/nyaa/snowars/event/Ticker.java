@@ -4,11 +4,7 @@ import cat.nyaa.snowars.SnowarsPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
 
 public class Ticker {
     private static Ticker INSTANCE = new Ticker();
@@ -25,16 +21,18 @@ public class Ticker {
         if (tickerTask!=null){
             tickerTask.cancel();
         }
+        List<TickTask> toRemove = new ArrayList<>();
         tickerTask = new BukkitRunnable() {
             @Override
             public void run() {
-                List<TickTask> toRemove = new ArrayList<>();
+                toRemove.clear();
                 tasks.forEach((task) ->{
                     TickEvent tickEvent = new TickEvent(task.getTickedAndIncrement());
-                    task.getRunnable().run();
                     if (task.getPredicate().test(tickEvent)){
                         toRemove.add(task);
+                        return;
                     }
+                    task.run();
                 });
                 tasks.removeAll(toRemove);
             }
@@ -46,14 +44,14 @@ public class Ticker {
         return INSTANCE;
     }
 
-    public void register(BukkitRunnable runnable, Predicate<TickEvent> shouldRemove) {
-        tasks.add(new TickTask(runnable, shouldRemove));
-    }
-
     public void stop() {
         if (tickerTask != null) {
             tickerTask.cancel();
             tickerTask = null;
         }
+    }
+
+    public void register(TickTask tickTask) {
+        tasks.add(tickTask);
     }
 }

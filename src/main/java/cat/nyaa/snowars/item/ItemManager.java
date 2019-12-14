@@ -5,6 +5,7 @@ import cat.nyaa.snowars.Configurations;
 import cat.nyaa.snowars.SnowarsPlugin;
 import cat.nyaa.snowars.config.ItemConfigs;
 import org.bukkit.ChatColor;
+import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
@@ -17,6 +18,7 @@ import java.util.stream.Collectors;
 
 public class ItemManager {
     private static final ItemManager INSTANCE = new ItemManager();
+    public static NamespacedKey SNOWBALL_ITEM= new NamespacedKey(SnowarsPlugin.plugin, "snowball_item");
 
     private Map<String, AbstractSnowball> snowballMap;
     private Map<String, ItemStack> itemStackMap;
@@ -72,7 +74,8 @@ public class ItemManager {
         itemStack.setAmount(1);
         ItemMeta itemMeta = itemStack.getItemMeta();
         if (itemMeta != null) {
-            itemMeta.getPersistentDataContainer().set(AbstractSnowball.SNOWBALL_DATA, PersistentDataType.STRING, ic.id);
+            itemMeta.setDisplayName(ChatColor.translateAlternateColorCodes('&', ic.name));
+            itemMeta.getPersistentDataContainer().set(SNOWBALL_ITEM, PersistentDataType.STRING, ic.id);
             ic.lore = ic.lore.stream().map(s -> ChatColor.translateAlternateColorCodes('&', s)).collect(Collectors.toList());
             itemMeta.setLore(ic.lore);
         }
@@ -83,7 +86,7 @@ public class ItemManager {
     public Optional<AbstractSnowball> getItem(ItemStack is) {
         ItemMeta itemMeta = is.getItemMeta();
         if (itemMeta == null) return Optional.empty();
-        String itemID = itemMeta.getPersistentDataContainer().get(AbstractSnowball.SNOWBALL_DATA, PersistentDataType.STRING);
+        String itemID = itemMeta.getPersistentDataContainer().get(SNOWBALL_ITEM, PersistentDataType.STRING);
         AbstractSnowball abstractSnowball = snowballMap.get(itemID);
         return Optional.ofNullable(abstractSnowball);
     }

@@ -2,22 +2,26 @@ package cat.nyaa.snowars;
 
 import cat.nyaa.snowars.item.AbstractSnowball;
 import cat.nyaa.snowars.item.ItemManager;
-import com.sk89q.worldedit.event.platform.CommandEvent;
+import cat.nyaa.snowars.item.SnowballHandler;
+import cat.nyaa.snowars.item.SnowballManager;
+import cat.nyaa.snowars.utils.Utils;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
-import org.bukkit.entity.Player;
+import org.bukkit.block.Block;
+import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
-import org.bukkit.event.player.PlayerCommandSendEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.server.ServerCommandEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.persistence.PersistentDataType;
 
 import java.util.Optional;
+import java.util.UUID;
 
 public class Events implements Listener {
 
@@ -52,17 +56,42 @@ public class Events implements Listener {
         }
     }
 
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onSnowballHit(ProjectileHitEvent event){
+        Projectile entity = event.getEntity();
+        SnowballManager snowballManager = SnowballManager.getInstance();
+        Optional<SnowballHandler> opt = snowballManager.get(entity);
+        if (!opt.isPresent()) {
+            return;
+        }
+        snowballManager.remove(entity);
+        SnowballHandler snowballHandler = opt.get();
+        String s = entity.getPersistentDataContainer().get(AbstractSnowball.SNOWBALL_FROM, PersistentDataType.STRING);
+        if (s == null)return;
+        Entity from = entity.getServer().getEntity(UUID.fromString(s));
+        if (from == null)return;
+        Block hitBlock = event.getHitBlock();
+        Entity hitEntity = event.getHitEntity();
+        if (hitBlock != null){
+            snowballHandler.onHitBlock(from, entity, hitBlock, event);
+        }
+        if (hitEntity!=null){
+            snowballHandler.onHitEntity(from, entity, hitEntity, event);
+        }
+    }
+
+
     @EventHandler(priority = EventPriority.MONITOR)
     public void onTeam(PlayerCommandPreprocessEvent event){
         if (event.getMessage().startsWith("/team")) {
-            AbstractSnowball.clearCache();
+            Utils.clearTeamCache();
         }
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onTeam(ServerCommandEvent event){
         if (event.getCommand().startsWith("team")) {
-            AbstractSnowball.clearCache();
+            Utils.clearTeamCache();
         }
     }
 
