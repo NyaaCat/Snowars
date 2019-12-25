@@ -1,2 +1,99 @@
 producer:
   name: "队伍[%s&r]的产雪姬 &a%d &r/ &3%d"
+  define:
+    error_no_item: '没有名为 [%s] 的物品'
+    success: '成功创建生产机 [%s] '
+  summon:
+    error_no_config: '没有名为 [%s] 的生产机'
+    success: '成功创建 [%s] '
+error:
+  not_player: '只有玩家可以执行此命令'
+  we_not_enabled: 'we插件未启用'
+  no_item_in_mainhand: '主手没有物品'
+get:
+  success: '成功取得物品'
+clear:
+  success: ''
+  failed_no_player: ''
+  team:
+    success: ''
+    not_exists: ''
+  all:
+    success: '成功清除计分板'
+score:
+  check:
+    player:
+      success: '玩家 [%s] 分数 %d'
+    team:
+      success: '队伍 [%s] 分数 %d'
+      info: '玩家 [%s] 分数 %d'
+    team_not_exists: '没有队伍 [%s]'
+destroy:
+  failed: '附近没有可破坏的生产机'
+  success: '破坏了生产机'
+region:
+  add:
+    failed_exists: '已经存在区域 [%s]'
+    success: '成功创建区域 [%s]'
+  remove:
+    failed_not_exist: '不存在区域 [%s]'
+    success: '成功移除区域 [%s]'
+  set_team:
+    error_no_region: '不存在区域 [%s]'
+    error_no_team: '没有队伍 [%s]'
+    success: '成功设置区域 [%s] 队伍 []'
+  auto_spawn:
+    error_no_region: '不存在区域 [%s]'
+    error_no_producer: '不存在生产机 [%s]'
+    producer_exists: '已存在生产机 [%s]'
+    add:
+      success: '成功创建生产机 [%s]'
+    remove:
+      success: '成功移除生产机 [%s]'
+create:
+  error:
+    no_selection: '未选择区域'
+pool:
+  create:
+    error_exists: '已存在道具池 [%s]'
+    success: '成功创建道具池 [%s]'
+  remove:
+    error_not_exists: '不存在道具池 [%s]'
+    success: '成功移除道具池 [%s]'
+  add_item:
+    error_no_pool: '不存在道具池 [%s]'
+    error_item_exist: '已存在道具 [%s]'
+    success: '成功在 [%s] 创建道具 [%s] , 权重 [%d]'
+  delete_item:
+    error_no_pool: '不存在道具池 [%s]'
+    error_no_item: '[%s] 中不存在道具 [%s]'
+    success: '成功在 [%s] 移除道具 [%s]'
+  item:
+    define:
+      success: '成功创建道具 [%s]'
+    remove:
+      error_no_item: '不存在道具 [%s]'
+      success: '成功移除道具 [%s]'
+  ready: '准备就绪，放入足够的 普通雪球 开始生产'
+  finished: '生产完成，请将产物全部取出'
+  error:
+    not_enough: '投入原料不足'
+    unknown: '未知错误，请清空箱子重试'
+    not_empty: '请清空箱子后重试'
+roller:
+  define:
+    error_not_targeting_chest:
+    failed_exists: '箱子 [%s] 已存在'
+    pool_not_exist: '道具池 [%s] 不存在'
+    success: '成功创建礼盒 [%s]'
+    error_not_roller_chest: '目标不是礼盒'
+  remove:
+    error_not_targeting_chest: '请对准目标箱子'
+    success: '成功移除礼盒 [%s]'
+snowball:
+  mine:
+    failed_no_target: '请对准10格内方块放置地雷'
+    triggered: '地雷触发！'
+    success: '成功埋设地雷，只有你自己能看到提示效果哦'
+socks:
+  name: '&c&l圣诞袜'
