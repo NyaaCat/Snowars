@@ -16,6 +16,9 @@ public class Configurations extends PluginConfigure {
     @Serializable
     public Map<String, ItemConfigs> itemConfigs = new HashMap<>();
 
+    @Serializable
+    public int bonusSocksInterval = 400;
+
     @Override
     protected JavaPlugin getPlugin() {
         return SnowarsPlugin.plugin;

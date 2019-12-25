@@ -102,4 +102,8 @@ public abstract class AbstractSnowball implements SnowballHandler {
     public void registerTickEvent(Entity from, Entity related, TickTask tickTask) {
         Ticker.getInstance().register(tickTask);
     }
+
+    public boolean isNormal(){
+        return this instanceof SnowballNormal;
+    }
 }

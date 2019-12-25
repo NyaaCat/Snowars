@@ -28,7 +28,7 @@ public class SnowballSplited extends AbstractSnowball {
                     Projectile splitedSnowball = launchSnowball(SnowballSplited.this, from, location, velocity, 15, 2d, false);
                     Utils.removeLater(splitedSnowball, 8);
                 }
-                projectile.remove();
+                Utils.removeNow(projectile);
             }
         }, delayedTriggerEvent -> !projectile.isDead());
         return true;

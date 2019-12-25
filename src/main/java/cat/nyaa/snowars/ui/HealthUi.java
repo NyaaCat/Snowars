@@ -8,8 +8,12 @@ import cat.nyaa.snowars.event.Ticker;
 import cat.nyaa.snowars.utils.Utils;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.*;
@@ -113,6 +117,10 @@ public class HealthUi {
         UUID uuid = entity.getUniqueId();
         HealthRecord currentHealth = healthMap.computeIfAbsent(uuid, uuid1 -> new HealthRecord(entity, 100d, 0, 0));
         currentHealth.damage(damage);
+        if (entity instanceof LivingEntity) {
+            ((LivingEntity) entity).damage(0.01);
+            ((LivingEntity) entity).addPotionEffect(PotionEffectType.REGENERATION.createEffect(1, 10));
+        }
     }
 
     private void onPlayerOverdamaged(Entity entity) {

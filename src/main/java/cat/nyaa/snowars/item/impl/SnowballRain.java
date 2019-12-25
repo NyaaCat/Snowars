@@ -37,7 +37,7 @@ public class SnowballRain extends AbstractSnowball {
 
     private void summonRain(LivingEntity from, Projectile projectile) {
         Location location = projectile.getLocation();
-        projectile.remove();
+        Utils.removeNow(projectile);
         Vector downDirection = Utils.y_axis.clone().multiply(-1);
         from.getWorld().spawnParticle(Particle.CLOUD, location, 100, 0.5, 0.5, 0.5, 0.1);
         from.getWorld().playSound(location, Sound.ENTITY_GENERIC_EXPLODE, 10, 1.5f);

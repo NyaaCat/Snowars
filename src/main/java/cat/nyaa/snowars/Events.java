@@ -4,6 +4,10 @@ import cat.nyaa.snowars.item.AbstractSnowball;
 import cat.nyaa.snowars.item.ItemManager;
 import cat.nyaa.snowars.item.SnowballHandler;
 import cat.nyaa.snowars.item.SnowballManager;
+import cat.nyaa.snowars.producer.Producer;
+import cat.nyaa.snowars.producer.ProducerManager;
+import cat.nyaa.snowars.roller.ItemPoolManager;
+import cat.nyaa.snowars.roller.PresentChest;
 import cat.nyaa.snowars.utils.Utils;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
@@ -13,10 +17,17 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.event.player.PlayerInteractAtEntityEvent;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.server.ServerCommandEvent;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 
@@ -32,6 +43,16 @@ public class Events implements Listener {
 
     public void reload() {
 
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = false)
+    public void onInteractEntity(PlayerInteractAtEntityEvent event) {
+        Entity rightClicked = event.getRightClicked();
+        if (ProducerManager.getInstance().isProducer(rightClicked)) {
+            Producer producer = ProducerManager.getInstance().getProducer(rightClicked);
+            producer.onClick(event.getPlayer());
+            event.setCancelled(true);
+        }
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = false)
@@ -80,7 +101,6 @@ public class Events implements Listener {
         }
     }
 
-
     @EventHandler(priority = EventPriority.MONITOR)
     public void onTeam(PlayerCommandPreprocessEvent event){
         if (event.getMessage().startsWith("/team")) {
@@ -92,6 +112,24 @@ public class Events implements Listener {
     public void onTeam(ServerCommandEvent event){
         if (event.getCommand().startsWith("team")) {
             Utils.clearTeamCache();
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onInventoryClose(InventoryCloseEvent event){
+        Inventory inventory = event.getInventory();
+        if (ItemPoolManager.getInstance().isPoolChest(inventory)) {
+            PresentChest chest = ItemPoolManager.getInstance().getChest(inventory);
+            chest.proceedInv();
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onInventoryClicked(InventoryOpenEvent event){
+        Inventory inventory = event.getInventory();
+        if (ItemPoolManager.getInstance().isPoolChest(inventory)) {
+            PresentChest chest = ItemPoolManager.getInstance().getChest(inventory);
+            chest.onOpen();
         }
     }
 
