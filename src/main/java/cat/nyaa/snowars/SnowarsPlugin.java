@@ -16,6 +16,8 @@ public class SnowarsPlugin extends JavaPlugin {
     Events events;
     I18n i18n;
 
+    public static boolean started = false;
+
     @Override
     public void onEnable() {
         super.onEnable();
@@ -27,13 +29,14 @@ public class SnowarsPlugin extends JavaPlugin {
         commands = new Commands(this, i18n);
         Ticker.getInstance().init();
         HealthUi.getInstance().start();
-        ProducerManager.getInstance().load();
         ItemPoolManager.getInstance().load();
         ScoreManager.getInstance().load();
         RegionManager.getInstance().load();
+        ProducerManager.getInstance().load();
         new BukkitRunnable(){
             @Override
             public void run() {
+                ProducerManager.getInstance().save();
                 ScoreManager.getInstance().save();
             }
         }.runTaskTimer(this, 5, 100);
@@ -42,14 +45,15 @@ public class SnowarsPlugin extends JavaPlugin {
     @Override
     public void saveConfig() {
         super.saveConfig();
-        ProducerManager.getInstance().save();
-        ScoreManager.getInstance().save();
-        ItemPoolManager.getInstance().save();
-        RegionManager.getInstance().save();
     }
 
     @Override
     public void onDisable() {
+        saveConfig();
+        ProducerManager.getInstance().save();
+        ScoreManager.getInstance().save();
+        ItemPoolManager.getInstance().save();
+        RegionManager.getInstance().save();
         super.onDisable();
         plugin = null;
         Ticker.getInstance().stop();
@@ -58,11 +62,10 @@ public class SnowarsPlugin extends JavaPlugin {
     public void onReload() {
         configurations.reload();
         events.reload();
-        ProducerManager.getInstance().load();
         ScoreManager.getInstance().load();
         RegionManager.getInstance().load();
         ItemPoolManager.getInstance().load();
-        new AutoSpawnTask().runTaskTimer(this, 5, configurations.bonusSocksInterval);
+        ProducerManager.getInstance().load();
         i18n.reload(configurations.language);
     }
 }

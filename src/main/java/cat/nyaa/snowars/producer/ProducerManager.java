@@ -7,20 +7,21 @@ import cat.nyaa.snowars.config.ProducerConfig;
 import cat.nyaa.snowars.event.TickEvent;
 import cat.nyaa.snowars.event.TickTask;
 import cat.nyaa.snowars.event.Ticker;
+import cat.nyaa.snowars.utils.Utils;
 import org.bukkit.*;
-import org.bukkit.entity.ArmorStand;
-import org.bukkit.entity.Entity;
+import org.bukkit.entity.*;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.LeatherArmorMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.scoreboard.Team;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Predicate;
+
+import static cat.nyaa.snowars.utils.Utils.colored;
 
 public class ProducerManager extends FileConfigure {
     private static ProducerManager INSTANCE;
@@ -32,18 +33,31 @@ public class ProducerManager extends FileConfigure {
     private Map<String, Producer> nbtMap;
 
     private Map<String, BonusSocks> socksMap;
+
+    private Map<String, Entity> bonusEntityMap;
+
     @Serializable
     Map<String, ProducerConfig> configMap;
 
-    public Producer summonProducer(Location location, Team team, ProducerConfig producerConfig){
+    public Producer summonProducer(Location location, ProducerConfig producerConfig) {
         World world = location.getWorld();
-        if (world == null)return null;
-        ArmorStand spawn = world.spawn(location, ArmorStand.class, armorStand -> {
-            armorStand.setHelmet(new ItemStack(Material.SNOWBALL));
-            armorStand.setInvulnerable(true);
-            armorStand.setCustomNameVisible(true);
+        if (world == null) return null;
+        Snowman spawn1 = world.spawn(location, Snowman.class, snowman -> {
+            snowman.setAI(false);
+            snowman.setCustomNameVisible(true);
+            snowman.setInvulnerable(true);
         });
-        Producer producer = new Producer(spawn, team, producerConfig);
+//        ArmorStand spawn = world.spawn(location, ArmorStand.class, armorStand -> {
+//            armorStand.setHelmet(new ItemStack(Material.SNOWBALL));
+//            armorStand.setInvulnerable(true);
+//            armorStand.setCustomNameVisible(true);
+//            armorStand.setVisible(false);
+//            armorStand.setHelmet(producerHead.clone());
+//            armorStand.setChestplate(producerChestPlate.clone());
+//            armorStand.setLeggings(producerLeggings.clone());
+//            armorStand.setBoots(producerBoots.clone());
+//        });
+        Producer producer = new Producer(spawn1, producerConfig);
         register(producer);
         return producer;
     }
@@ -52,8 +66,8 @@ public class ProducerManager extends FileConfigure {
         return configMap.keySet();
     }
 
-    public ProducerConfig define(String name, double capacity, double current, double produceSpeed, ItemStack is){
-        if (configMap.containsKey(name)){
+    public ProducerConfig define(String name, double capacity, double current, double produceSpeed, ItemStack is) {
+        if (configMap.containsKey(name)) {
             return configMap.get(name);
         }
         ProducerConfig producerConfig = new ProducerConfig();
@@ -66,7 +80,7 @@ public class ProducerManager extends FileConfigure {
         return producerConfig;
     }
 
-    public ProducerConfig getConfig(String name){
+    public ProducerConfig getConfig(String name) {
         return configMap.get(name);
     }
 
@@ -74,10 +88,11 @@ public class ProducerManager extends FileConfigure {
         nbtMap.put(producer.uuid, producer);
     }
 
-    private ProducerManager(){
+    private ProducerManager() {
         nbtMap = new HashMap<>();
         configMap = new LinkedHashMap<>();
         socksMap = new LinkedHashMap<>();
+        bonusEntityMap = new LinkedHashMap<>();
     }
 
     @Override
@@ -91,9 +106,9 @@ public class ProducerManager extends FileConfigure {
     }
 
     public static ProducerManager getInstance() {
-        if(INSTANCE == null){
-            synchronized (ProducerManager.class){
-                if (INSTANCE == null){
+        if (INSTANCE == null) {
+            synchronized (ProducerManager.class) {
+                if (INSTANCE == null) {
                     INSTANCE = new ProducerManager();
                 }
             }
@@ -107,13 +122,16 @@ public class ProducerManager extends FileConfigure {
 
     public Producer getProducer(Entity rightClicked) {
         Producer producer = nbtMap.get(rightClicked.getUniqueId().toString());
-        if (producer == null){
+        if (producer == null) {
             producer = socksMap.get(rightClicked.getUniqueId().toString());
         }
         return producer;
     }
 
     public void start() {
+        if (!stopped){
+            stop();
+        }
         stopped = false;
         Ticker.getInstance().register(producerTask);
     }
@@ -130,7 +148,7 @@ public class ProducerManager extends FileConfigure {
     }
 
     public void removeLater(String uuid) {
-        new BukkitRunnable(){
+        new BukkitRunnable() {
             @Override
             public void run() {
                 nbtMap.remove(uuid);
@@ -163,12 +181,36 @@ public class ProducerManager extends FileConfigure {
             armorStand.setBoots(sockBoots.clone());
             armorStand.addScoreboardTag("bonus_socks");
         });
-        BonusSocks bonusSocks = new BonusSocks(spawn, null, config);
+        BonusSocks bonusSocks = new BonusSocks(spawn, config);
         socksMap.put(bonusSocks.uuid, bonusSocks);
         return bonusSocks;
     }
 
-    public class ProducerTask extends TickTask{
+    public void remove(String name) {
+        configMap.remove(name);
+    }
+
+    public void summonBonusChicken(Location location) {
+        World world = location.getWorld();
+        Chicken spawn = world.spawn(location, Chicken.class, chicken -> {
+            chicken.setCustomNameVisible(true);
+            chicken.setCustomName(colored(I18n.format("lucky_chicken")));
+            chicken.addScoreboardTag("lucky_entity");
+        });
+        Utils.removeLater(spawn, 6000);
+    }
+
+    public void summonBonusBunny(Location location) {
+        World world = location.getWorld();
+        Rabbit spawn = world.spawn(location, Rabbit.class, chicken -> {
+            chicken.setCustomNameVisible(true);
+            chicken.setCustomName(colored(I18n.format("lucky_bunny")));
+            chicken.addScoreboardTag("lucky_entity");
+        });
+        Utils.removeLater(spawn, 6000);
+    }
+
+    public class ProducerTask extends TickTask {
         public ProducerTask(Predicate<TickEvent> shouldRemove) {
             super(shouldRemove);
         }

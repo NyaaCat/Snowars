@@ -3,7 +3,7 @@ package cat.nyaa.snowars.producer;
 import cat.nyaa.snowars.I18n;
 import cat.nyaa.snowars.config.ProducerConfig;
 import cat.nyaa.snowars.utils.Utils;
-import org.bukkit.Location;
+import org.bukkit.*;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -11,8 +11,8 @@ import org.bukkit.scoreboard.Team;
 
 public class BonusSocks extends Producer{
 
-    public BonusSocks(LivingEntity spawn, Team team, ProducerConfig producerConfig) {
-        super(spawn, team, producerConfig);
+    public BonusSocks(LivingEntity spawn, ProducerConfig producerConfig) {
+        super(spawn, producerConfig);
     }
 
     public BonusSocks() {
@@ -45,6 +45,10 @@ public class BonusSocks extends Producer{
     @Override
     public void onClick(Player clicked) {
         super.onClick(clicked);
+        Location location = producerEntity.getLocation();
+        World world = producerEntity.getWorld();
+        world.playSound(location, Sound.ENTITY_PLAYER_LEVELUP, 5, 1);
+        world.spawnParticle(Particle.CLOUD, location, 50, 0.5, 0.5, 0.5, 0.1, null);
         producerEntity.remove();
         ProducerManager.getInstance().removeLater(uuid);
     }

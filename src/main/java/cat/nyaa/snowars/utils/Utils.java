@@ -102,7 +102,25 @@ public class Utils {
     public static void teleportHome(Entity hit, World world) {
         if (!(hit instanceof Player)) return;
         Location originLocation = hit.getLocation().clone();
-        Location bedSpawnLocation = ((Player) hit).getBedSpawnLocation();
+        Location bedSpawnLocation = null;
+        Team team = Utils.getTeam(hit);
+        if (team == null) {
+            bedSpawnLocation = ((Player) hit).getBedSpawnLocation();
+        } else {
+            RegionConfig teamRegion = RegionManager.getInstance().getTeamRegion(team);
+            if (teamRegion != null) {
+                for (int i = 0; i < 20; i++) {
+                    Location location = Utils.randomLocation(teamRegion.region);
+                    if (location != null) {
+                        bedSpawnLocation = location;
+                        break;
+                    }
+                }
+                if (bedSpawnLocation == null) {
+                    bedSpawnLocation = ((Player) hit).getBedSpawnLocation();
+                }
+            }
+        }
         if (bedSpawnLocation == null) {
             bedSpawnLocation = hit.getWorld().getSpawnLocation().clone();
         }

@@ -19,6 +19,9 @@ import org.bukkit.scoreboard.Team;
 public class SnowballGolden extends AbstractSnowball {
     @Override
     public boolean onUse(LivingEntity from, PlayerInteractEvent event) {
+        if(ScoreManager.getInstance().isGoldExperienced(from)){
+            return false;
+        }
         Projectile related = launchSnowball(this, from, null, from.getEyeLocation().getDirection(), 1, 1.5, true);
         final int duartion = 600;
         if (from instanceof Player) {

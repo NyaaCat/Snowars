@@ -8,10 +8,15 @@ import cat.nyaa.snowars.SnowarsPlugin;
 import cat.nyaa.snowars.config.ProducerConfig;
 import cat.nyaa.snowars.item.ItemManager;
 import cat.nyaa.snowars.utils.Utils;
+import org.bukkit.Location;
+import org.bukkit.Particle;
+import org.bukkit.Sound;
+import org.bukkit.World;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.Team;
 
 import java.util.UUID;
@@ -28,21 +33,13 @@ public class Producer implements ISerializable {
     double snowballPerSec = 1;
     @Serializable
     String item = "";
-    @Serializable
-    String team;
-    @Serializable
-    String teamDisplayName;
 
     private ItemStack itemCache = null;
     LivingEntity producerEntity;
 
-    public Producer(LivingEntity spawn, Team team, ProducerConfig producerConfig) {
+    public Producer(LivingEntity spawn, ProducerConfig producerConfig) {
         producerEntity = spawn;
         uuid = spawn.getUniqueId().toString();
-        if (team != null) {
-            this.team = team.getName();
-            this.teamDisplayName = team.getDisplayName();
-        }
         updateConfig(producerConfig);
         updateName();
     }
@@ -56,7 +53,7 @@ public class Producer implements ISerializable {
         try {
             producerEntity = (LivingEntity) SnowarsPlugin.plugin.getServer().getEntity(UUID.fromString(uuid));
         } catch (Exception e) {
-            SnowarsPlugin.plugin.getLogger().log(Level.INFO, String.format("no entity found for producer team %s [%s], removing.", team, teamDisplayName));
+            SnowarsPlugin.plugin.getLogger().log(Level.INFO, String.format("no entity found for producer, removing."));
             ProducerManager.getInstance().removeLater(uuid);
         }
     }
@@ -82,15 +79,21 @@ public class Producer implements ISerializable {
 
     public void tick(int tick) {
         double magnification = SnowarsPlugin.plugin.configurations.magnification;
+        if (producerEntity == null){
+            ProducerManager.getInstance().removeLater(uuid);
+            return;
+        }
         if (producerEntity.getWorld().hasStorm()) {
             magnification += 1;
         }
-        double product = magnification * current + (snowballPerSec / 20);
+        double product =  (current + magnification *(snowballPerSec / 20));
         current = Math.min(product, capacity);
         if (tick % 5 == 0) {
             updateName();
         }
     }
+
+    boolean inCooldown = false;
 
     public void onClick(Player clicked) {
         int toTake = (int) Math.floor(current);
@@ -109,6 +112,19 @@ public class Producer implements ISerializable {
         }
         toTake += maxStackSize;
         take(clicked, normal, toTake);
+        if (!inCooldown) {
+            inCooldown = true;
+            Location location = producerEntity.getLocation();
+            World world = producerEntity.getWorld();
+            world.playSound(location, Sound.ENTITY_PLAYER_LEVELUP, 5, 1);
+            world.spawnParticle(Particle.VILLAGER_HAPPY, location, 20, 0.5, 0.5, 0.5, 0.1, null);
+            new BukkitRunnable() {
+                @Override
+                public void run() {
+                    inCooldown = false;
+                }
+            }.runTaskLater(SnowarsPlugin.plugin, 20);
+        }
         updateName();
     }
 

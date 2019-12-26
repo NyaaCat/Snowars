@@ -4,18 +4,24 @@ import cat.nyaa.nyaacore.configuration.FileConfigure;
 import cat.nyaa.snowars.SnowarsPlugin;
 import cat.nyaa.snowars.config.RegionConfig;
 import cat.nyaa.snowars.producer.ProducerManager;
+import cat.nyaa.snowars.ui.HealthUi;
+import org.bukkit.Location;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scoreboard.Team;
 
 import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class RegionManager extends FileConfigure {
     private static RegionManager INSTANCE;
 
     private RegionManager() {
         regionMap = new LinkedHashMap<>();
+        teamRegionMap = new LinkedHashMap<>();
     }
 
     public static RegionManager getInstance(){
@@ -31,6 +37,9 @@ public class RegionManager extends FileConfigure {
 
     @Serializable
     Map<String, RegionConfig> regionMap;
+
+    @Serializable
+    Map<String, String> teamRegionMap;
 
     public void addRegion(RegionConfig.Region region, String name) {
         RegionConfig config = new RegionConfig(name, region);
@@ -62,8 +71,8 @@ public class RegionManager extends FileConfigure {
     }
 
     public void setTeam(String regionName, Team team) {
-        RegionConfig regionConfig = regionMap.get(regionName);
-        regionConfig.team = team.getName();
+        teamRegionMap.put(team.getName(), regionName);
+        save();
     }
 
     public Collection<? extends String> getRegionNames() {
@@ -72,5 +81,26 @@ public class RegionManager extends FileConfigure {
 
     public Collection<RegionConfig> getRegions() {
         return regionMap.values();
+    }
+
+    public RegionConfig getTeamRegion(Team team) {
+        return regionMap.get(teamRegionMap.get(team.getName()));
+    }
+
+    public List<String> getRegionsForLocation(Location location) {
+        return regionMap.entrySet().stream()
+                .filter(entry -> {
+                    RegionConfig regionConfig1 = entry.getValue();
+                    return regionConfig1.region != null && regionConfig1.region.contains(location);
+                })
+                .map(entry -> entry.getKey())
+                .collect(Collectors.toList());
+    }
+
+    public boolean isInvalidRegion(Player player, String regionsForLocation) {
+        Team team = Utils.getTeam(player);
+        if (team == null)return false;
+        return teamRegionMap.entrySet().stream()
+                .anyMatch(entry -> entry.getValue().equals(regionsForLocation) && !entry.getKey().equals(team.getName()));
     }
 }

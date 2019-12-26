@@ -192,4 +192,8 @@ public class ScoreManager extends FileConfigure {
             teamScoreMap.put(getTeamKey(team), originalTeamScore + diff);
         }
     }
+
+    public boolean isGoldExperienced(Entity from) {
+        return goldExperienced.contains(from);
+    }
 }

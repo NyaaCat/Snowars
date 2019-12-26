@@ -2,6 +2,7 @@ package cat.nyaa.snowars.item.impl;
 
 import cat.nyaa.snowars.ScoreManager;
 import cat.nyaa.snowars.item.AbstractSnowball;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
@@ -36,6 +37,9 @@ public class SnowballJustice extends AbstractSnowball {
         double total = fromScore + score;
         s.setScore(from, total/2);
         s.setScore(hit, total/2);
+        World world = from.getWorld();
+        world.strikeLightningEffect(from.getLocation());
+        world.strikeLightningEffect(hit.getLocation());
     }
 
     @Override

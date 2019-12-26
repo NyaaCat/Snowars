@@ -22,9 +22,6 @@ public class RegionConfig implements ISerializable {
     public Region region = new Region();
 
     @Serializable
-    public String team = "";
-
-    @Serializable
     public List<String> autoSpawns;
 
     public RegionConfig(String name, Region region) {

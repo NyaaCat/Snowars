@@ -15,14 +15,17 @@ import java.util.List;
 
 public class AutoSpawnTask extends BukkitRunnable {
     static AutoSpawnTask task = null;
+    static CheckTeamRegionTask checkTeamRegionTask = null;
 
     public static void start() {
         if (task != null){
             stop();
         }
         task = new AutoSpawnTask();
+        checkTeamRegionTask = new CheckTeamRegionTask();
         SnowarsPlugin plugin = SnowarsPlugin.plugin;
         task.runTaskTimer(plugin, 5, plugin.configurations.bonusSocksInterval);
+        checkTeamRegionTask.runTaskTimer(plugin, 5, 20);
     }
 
     public static void stop() {
@@ -30,6 +33,12 @@ public class AutoSpawnTask extends BukkitRunnable {
             if (!task.isCancelled()) {
                 task.cancel();
                 task = null;
+            }
+        }
+        if (checkTeamRegionTask != null) {
+            if (!checkTeamRegionTask.isCancelled()) {
+                checkTeamRegionTask.cancel();
+                checkTeamRegionTask = null;
             }
         }
     }
@@ -46,6 +55,20 @@ public class AutoSpawnTask extends BukkitRunnable {
                         Location location = Utils.randomLocation(regionConfig.region);
                         if (location!=null){
                             BonusSocks bonusSocks = ProducerManager.getInstance().summonBonusSocks(location, config);
+                            break;
+                        }
+                    }
+                    for (int i = 0; i < 20; i++) {
+                        Location location = Utils.randomLocation(regionConfig.region);
+                        if (location!=null){
+                            ProducerManager.getInstance().summonBonusChicken(location);
+                            break;
+                        }
+                    }
+                    for (int i = 0; i < 20; i++) {
+                        Location location = Utils.randomLocation(regionConfig.region);
+                        if (location!=null){
+                            ProducerManager.getInstance().summonBonusBunny(location);
                             break;
                         }
                     }

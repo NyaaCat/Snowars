@@ -2,6 +2,7 @@ package cat.nyaa.snowars.item.impl;
 
 import cat.nyaa.nyaacore.Message;
 import cat.nyaa.snowars.I18n;
+import cat.nyaa.snowars.SnowarsPlugin;
 import cat.nyaa.snowars.event.TickTask;
 import cat.nyaa.snowars.item.AbstractSnowball;
 import cat.nyaa.snowars.utils.Utils;
@@ -53,6 +54,11 @@ public class SnowballMine extends AbstractSnowball {
                 registerTickEvent(from, armor, new TickTask(tickevent -> triggered.get() || armor.isDead()) {
                     @Override
                     public void run(int ticked) {
+                        if (!SnowarsPlugin.started){
+                            Utils.removeLater(armor, 1);
+                            triggered.set(true);
+                            return;
+                        }
                         List<Entity> nearbyEntities = armor.getNearbyEntities(2, 2, 2);
                         if (from instanceof Player) {
                             ((Player) from).spawnParticle(Particle.REDSTONE, armor.getEyeLocation(), 1, 0.5, 0.5, 0.5, 1, dustOptions);

@@ -66,6 +66,8 @@ public abstract class AbstractSnowball implements SnowballHandler {
         return launch(handler, Snowball.class, from, fromLocation, towards, cone, speed, gravity);
     }
 
+    boolean hitCooldown = false;
+
     @Override
     public void onHitEntity(Entity from, Entity related, Entity hit, ProjectileHitEvent event) {
         if (!(hit instanceof Player) || hit instanceof ArmorStand) return;
@@ -78,6 +80,19 @@ public abstract class AbstractSnowball implements SnowballHandler {
         ScoreManager instance = ScoreManager.getInstance();
         instance.addFor(from, hitScore);
         instance.damage(hit, getDamage(from, hit, fromTeam, hitTeam));
+        if (!hitCooldown){
+            hitCooldown = true;
+            World world = from.getWorld();
+            Location location = hit.getLocation();
+            world.spawnParticle(Particle.SNOW_SHOVEL, location, 20, 0, 0, 0, 0.1, null);
+            world.playSound(from.getLocation(), Sound.ENTITY_ARROW_HIT_PLAYER, 1, 0.5f);
+            new BukkitRunnable() {
+                @Override
+                public void run() {
+                    hitCooldown = true;
+                }
+            }.runTaskLater(SnowarsPlugin.plugin, 20);
+        }
     }
 
     public static double zeroOr(Team from, Team hit, double def) {

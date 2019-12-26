@@ -7,17 +7,16 @@ import cat.nyaa.snowars.SnowarsPlugin;
 import cat.nyaa.snowars.item.AbstractSnowball;
 import cat.nyaa.snowars.item.ItemManager;
 import cat.nyaa.snowars.utils.Utils;
-import org.bukkit.ChatColor;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Chest;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.HumanEntity;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +30,7 @@ public class PresentChest implements ISerializable {
     private Inventory chestInventory;
     private Entity messageDisplay;
     private String errorMessage = "";
+    private BukkitRunnable currentTask = null;
 
     @Serializable
     int blockX;
@@ -114,7 +114,7 @@ public class PresentChest implements ISerializable {
                 ItemStack[] storageContents = chestInventory.getStorageContents();
                 List<Integer> normalIndexes = new ArrayList<>();
 
-                int amount = 0;
+                final int[] amount = {0};
                 for (int i = 0; i < storageContents.length; i++) {
                     ItemStack storageContent = storageContents[i];
                     if (storageContent == null || storageContent.getType().equals(Material.AIR)) continue;
@@ -122,40 +122,56 @@ public class PresentChest implements ISerializable {
                     if (item.isPresent()) {
                         if (item.get().isNormal()) {
                             normalIndexes.add(i);
-                            amount += storageContent.getAmount();
+                            amount[0] += storageContent.getAmount();
                         }
                     }
                 }
                 int minCost = cost;
-                if (amount > minCost) {
+                if (amount[0] > minCost) {
                     for (int i = 0; i < normalIndexes.size(); i++) {
                         storageContents[normalIndexes.get(i)] = new ItemStack(Material.AIR);
                     }
                     chestInventory.setContents(storageContents);
+                    currentTask = new BukkitRunnable() {
+                        @Override
+                        public void run() {
+                            costItemAmount += amount[0];
+                            int extraSpawns = costItemAmount / bonusCost;
+                            costItemAmount = costItemAmount % bonusCost;
+                            for (int i = 0; i < extraSpawns; i++) {
+                                ItemStack rollResult = extraPool.rollItem();
+                                if (rollResult == null) break;
+                                addOrDropItem(rollResult);
+                            }
 
-                    costItemAmount += amount;
-                    int extraSpawns = costItemAmount / bonusCost;
-                    costItemAmount = costItemAmount % bonusCost;
-                    for (int i = 0; i < extraSpawns; i++) {
-                        ItemStack rollResult = extraPool.rollItem();
-                        if (rollResult == null) break;
-                        addOrDropItem(rollResult);
-                    }
-
-                    while (amount > minCost) {
-                        ItemStack rollResult = itemPool.rollItem();
-                        if (rollResult == null) {
-                            break;
+                            while (amount[0] > minCost) {
+                                ItemStack rollResult = itemPool.rollItem();
+                                if (rollResult == null) {
+                                    break;
+                                }
+                                amount[0] -= cost;
+                                addOrDropItem(rollResult);
+                            }
+                            World world = block.getWorld();
+                            Location location = block.getLocation().add(0.5, 0.5, 0.5);
+                            world.spawnParticle(Particle.CLOUD, location, 200, 0, 0, 0, 0.1);
+                            world.playSound(location, Sound.UI_TOAST_CHALLENGE_COMPLETE, 10, 2);
+                            state = ChestState.FINISHED;
+                            updateDisplay();
                         }
-                        amount -= cost;
-                        addOrDropItem(rollResult);
-                    }
-                    state = ChestState.FINISHED;
-                }
-                else if (amount != 0){
+                    };
+                    currentTask.runTaskLater(SnowarsPlugin.plugin, 100);
+                    new BukkitRunnable() {
+                        @Override
+                        public void run() {
+                            closeLooking();
+                        }
+                    }.runTaskLater(SnowarsPlugin.plugin, 1);
+                    state = ChestState.RUNNING;
+                } else if (amount[0] != 0) {
                     state = ChestState.ERROR;
                     errorMessage = "pool.error.not_enough";
-                }else {
+                } else {
                     state = ChestState.READY;
                 }
             }
@@ -179,6 +195,8 @@ public class PresentChest implements ISerializable {
                 case ERROR:
                     message = I18n.format(errorMessage);
                     break;
+                case RUNNING:
+                    message = I18n.format("pool.running");
             }
             messageDisplay.setCustomName(ChatColor.translateAlternateColorCodes('&', message));
         }
@@ -204,14 +222,20 @@ public class PresentChest implements ISerializable {
         return state instanceof Chest;
     }
 
-    public void onOpen() {
-        validite();
+    public boolean onOpen() {
+        boolean valid = validite();
         updateDisplay();
+        return valid;
     }
 
-    private void validite() {
+    private boolean validite() {
         ItemStack[] storageContents = chestInventory.getStorageContents();
         ChestState tempState = ChestState.READY;
+        if (state == ChestState.RUNNING && currentTask != null) {
+            closeLooking();
+            return false;
+        }
+
         for (int i = 0; i < storageContents.length; i++) {
             ItemStack storageContent = storageContents[i];
             if (storageContent != null && !storageContent.getType().equals(Material.AIR)) {
@@ -225,6 +249,11 @@ public class PresentChest implements ISerializable {
             }
         }
         state = tempState;
+        return true;
+    }
+
+    private void closeLooking() {
+        chestInventory.getViewers().forEach(HumanEntity::closeInventory);
     }
 
     public void removeDisplay() {
@@ -232,6 +261,6 @@ public class PresentChest implements ISerializable {
     }
 
     enum ChestState {
-        READY, FINISHED, ERROR;
+        READY, FINISHED, ERROR, RUNNING;
     }
 }

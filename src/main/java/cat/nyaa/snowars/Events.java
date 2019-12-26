@@ -9,8 +9,7 @@ import cat.nyaa.snowars.producer.ProducerManager;
 import cat.nyaa.snowars.roller.ItemPoolManager;
 import cat.nyaa.snowars.roller.PresentChest;
 import cat.nyaa.snowars.utils.Utils;
-import org.bukkit.GameMode;
-import org.bukkit.Material;
+import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
@@ -18,6 +17,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
@@ -49,9 +49,10 @@ public class Events implements Listener {
     public void onInteractEntity(PlayerInteractAtEntityEvent event) {
         Entity rightClicked = event.getRightClicked();
         if (ProducerManager.getInstance().isProducer(rightClicked)) {
+            event.setCancelled(true);
+            if (!SnowarsPlugin.started) return;
             Producer producer = ProducerManager.getInstance().getProducer(rightClicked);
             producer.onClick(event.getPlayer());
-            event.setCancelled(true);
         }
     }
 
@@ -68,6 +69,7 @@ public class Events implements Listener {
         Optional<AbstractSnowball> item = itemManager.getItem(is);
         if (item.isPresent()) {
             event.setCancelled(true);
+            if (!SnowarsPlugin.started) return;
             AbstractSnowball snowballItem = item.get();
             if (snowballItem.onUse(player, event)) {
                 if(!player.getGameMode().equals(GameMode.CREATIVE)){
@@ -93,10 +95,25 @@ public class Events implements Listener {
         if (from == null)return;
         Block hitBlock = event.getHitBlock();
         Entity hitEntity = event.getHitEntity();
+        if (!SnowarsPlugin.started) return;
         if (hitBlock != null){
             snowballHandler.onHitBlock(from, entity, hitBlock, event);
         }
         if (hitEntity!=null){
+            if (hitEntity.getScoreboardTags().contains("lucky_entity")){
+                World world = from.getWorld();
+                if (hitEntity instanceof Chicken) {
+                    world.playSound(from.getLocation(), Sound.ENTITY_ARROW_HIT_PLAYER, 1, 2);
+                    world.spawnParticle(Particle.HEART, hitEntity.getLocation(), 20, 1, 1, 1, 0);
+                    ScoreManager.getInstance().addFor(from, 5);
+                    hitEntity.remove();
+                }else if (hitEntity instanceof Rabbit){
+                    world.playSound(from.getLocation(), Sound.ENTITY_ARROW_HIT_PLAYER, 1, 2);
+                    world.spawnParticle(Particle.HEART, hitEntity.getLocation(), 20, 1, 1, 1, 0);
+                    ScoreManager.getInstance().addFor(from, 3);
+                    hitEntity.remove();
+                }
+            }
             snowballHandler.onHitEntity(from, entity, hitEntity, event);
         }
     }
@@ -125,11 +142,20 @@ public class Events implements Listener {
     }
 
     @EventHandler(priority = EventPriority.HIGH)
+    public void onEntityDie(EntityDeathEvent event){
+        if (event.getEntity().getScoreboardTags().contains("lucky_entity")) {
+            event.getDrops().clear();
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH)
     public void onInventoryClicked(InventoryOpenEvent event){
         Inventory inventory = event.getInventory();
         if (ItemPoolManager.getInstance().isPoolChest(inventory)) {
             PresentChest chest = ItemPoolManager.getInstance().getChest(inventory);
-            chest.onOpen();
+            if (!chest.onOpen()) {
+                event.setCancelled(true);
+            }
         }
     }
 

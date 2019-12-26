@@ -76,6 +76,7 @@ pool:
       success: '成功移除道具 [%s]'
   ready: '准备就绪，放入足够的 普通雪球 开始生产'
   finished: '生产完成，请将产物全部取出'
+  running: '正在生产...'
   error:
     not_enough: '投入原料不足'
     unknown: '未知错误，请清空箱子重试'
@@ -97,3 +98,5 @@ snowball:
     success: '成功埋设地雷，只有你自己能看到提示效果哦'
 socks:
   name: '&c&l圣诞袜'
+lucky_chicken: '幸运鸡'
+lucky_bunny: '幸运兔'
