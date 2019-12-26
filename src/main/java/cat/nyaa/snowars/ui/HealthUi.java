@@ -15,6 +15,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scoreboard.Team;
 
 import java.util.*;
 
@@ -141,7 +142,10 @@ public class HealthUi {
                     break;
                 }
                 Player poll = playerQueue.poll();
-                refreshPlayer(poll);
+                Team team = Utils.getTeam(poll);
+                if (team != null) {
+                    refreshPlayer(poll);
+                }
             }
         }
 
@@ -167,7 +171,7 @@ public class HealthUi {
         public void update(int ticked) {
             long x = ticked - lastDamaged;
             regeneration(x);
-            damaged = Math.max(0, damaged - Math.max(0, Math.min(5, (0.004761904761904764*x*x*x-0.21428571428571414*x*x+3.195238095238093*x-15.285714285714278))));
+            damaged = Math.max(0, damaged - Math.max(0, Math.min(5, (0.004761904761904764 * x * x * x - 0.21428571428571414 * x * x + 3.195238095238093 * x - 15.285714285714278))));
         }
 
         private void regeneration(long x) {

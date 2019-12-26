@@ -1,5 +1,5 @@
 producer:
-  name: "队伍[%s&r]的产雪姬 &a%d &r/ &3%d"
+  name: "产雪姬 &a%d &r/ &3%d"
   define:
     error_no_item: '没有名为 [%s] 的物品'
     success: '成功创建生产机 [%s] '

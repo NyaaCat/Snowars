@@ -77,11 +77,16 @@ public class Producer implements ISerializable {
     }
 
     protected String getName() {
-        return I18n.format("producer.name", teamDisplayName, ((int) Math.floor(current)), ((int) Math.floor(capacity)));
+        return I18n.format("producer.name", ((int) Math.floor(current)), ((int) Math.floor(capacity)));
     }
 
     public void tick(int tick) {
-        current = Math.min(current + (snowballPerSec / 20), capacity);
+        double magnification = SnowarsPlugin.plugin.configurations.magnification;
+        if (producerEntity.getWorld().hasStorm()) {
+            magnification += 1;
+        }
+        double product = magnification * current + (snowballPerSec / 20);
+        current = Math.min(product, capacity);
         if (tick % 5 == 0) {
             updateName();
         }

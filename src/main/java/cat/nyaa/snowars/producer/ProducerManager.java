@@ -134,6 +134,7 @@ public class ProducerManager extends FileConfigure {
             @Override
             public void run() {
                 nbtMap.remove(uuid);
+                socksMap.remove(uuid);
             }
         }.runTaskLater(SnowarsPlugin.plugin, 1);
     }

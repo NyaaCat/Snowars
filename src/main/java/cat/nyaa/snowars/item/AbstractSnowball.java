@@ -68,7 +68,7 @@ public abstract class AbstractSnowball implements SnowballHandler {
 
     @Override
     public void onHitEntity(Entity from, Entity related, Entity hit, ProjectileHitEvent event) {
-        if (!(hit instanceof LivingEntity) || hit instanceof ArmorStand) return;
+        if (!(hit instanceof Player) || hit instanceof ArmorStand) return;
         int noDamageTicks = ((LivingEntity) hit).getNoDamageTicks();
         if (noDamageTicks > 0 && noDamageTicks != 20) return;
         Scoreboard mainScoreboard = from.getServer().getScoreboardManager().getMainScoreboard();

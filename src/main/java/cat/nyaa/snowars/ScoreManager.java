@@ -49,16 +49,17 @@ public class ScoreManager extends FileConfigure {
         String teamName = getTeamKey(team);
 
         double score = scoreMap.computeIfAbsent(uuid, i -> 0d);
-        double teamScore = teamScoreMap.computeIfAbsent(teamName, team1 -> 0d);
-
         hitScore = calcFinalScore(from, hitScore);
-
         scoreMap.put(uuid, score + hitScore);
-        teamScoreMap.put(teamName, teamScore + hitScore);
+
+        if (teamName != null) {
+            double teamScore = teamScoreMap.computeIfAbsent(teamName, team1 -> 0d);
+            teamScoreMap.put(teamName, teamScore + hitScore);
+        }
     }
 
     private String getTeamKey(Team team) {
-        return team.getName();
+        return team == null ? null : team.getName();
     }
 
     private double calcFinalScore(Entity from, double hitScore) {

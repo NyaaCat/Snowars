@@ -15,6 +15,7 @@ import cat.nyaa.snowars.roller.ItemPool;
 import cat.nyaa.snowars.roller.ItemPoolManager;
 import cat.nyaa.snowars.roller.PresentChest;
 import cat.nyaa.snowars.utils.RegionManager;
+import com.google.common.util.concurrent.AtomicDouble;
 import com.sk89q.worldedit.IncompleteRegionException;
 import com.sk89q.worldedit.LocalSession;
 import com.sk89q.worldedit.bukkit.BukkitWorld;
@@ -37,7 +38,9 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
 
+import javax.print.attribute.standard.PrinterName;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class Commands extends CommandReceiver {
@@ -91,7 +94,7 @@ public class Commands extends CommandReceiver {
             if (!InventoryUtils.addItem(player, item)) {
                 player.getWorld().dropItem(player.getEyeLocation(), item);
             }
-            new Message("").append(I18n.format("get.success"), item).send(sender);
+            new Message("").append(I18n.format("get.success")).append(item).send(sender);
         }
     }
 
@@ -150,6 +153,7 @@ public class Commands extends CommandReceiver {
                 new Message("").append(I18n.format("clear.all.success")).send(sender);
                 break;
         }
+        ScoreManager.getInstance().save();
     }
 
     private void onCheck(CommandSender sender, Arguments arguments) {
@@ -168,17 +172,21 @@ public class Commands extends CommandReceiver {
                 Team team = mainScoreboard.getTeam(teamName);
                 if (team!=null){
                     new Message("").append(I18n.format("score.check.team.success", teamName)).send(sender);
+                    AtomicDouble sc = new AtomicDouble(0);
                     team.getEntries().forEach(s -> {
                         double score1 = scoreManager.getScore(s);
-                        new Message("").append(I18n.format("score.check.team", s, score1)).send(sender);
+                        sc.addAndGet(score1);
+                        new Message("").append(I18n.format("score.check.team.info", s, score1)).send(sender);
                     });
+                    new Message("").append(I18n.format("score.check.team.success", teamName, sc.get())).send(sender);
                 }else {
-                    new Message("").append(I18n.format("score.check.team_not_exists")).send(sender);
+                    new Message("").append(I18n.format("score.check.team_not_exists", teamName)).send(sender);
                 }
                 break;
             case "all":
                 break;
         }
+        ScoreManager.getInstance().save();
     }
 
     public List<String> scoreCompleter(CommandSender sender, Arguments arguments){
@@ -194,7 +202,6 @@ public class Commands extends CommandReceiver {
             case 2:
                 s.add("player");
                 s.add("team");
-                s.add("player_team");
                 s.add("all");
                 break;
             case 3:
@@ -205,10 +212,6 @@ public class Commands extends CommandReceiver {
                         String action2 = arguments.nextString();
                         switch (action2){
                             case "player":
-                            case "player_team":
-                                Set<String> seta = new HashSet();
-                                seta.addAll(server.getOnlinePlayers().stream().map(pl -> pl.getName()).collect(Collectors.toList()));
-                                seta.addAll(scoreManager.getPlayers());
                                 break;
                             case "team":
                                 Scoreboard mainScoreboard = server.getScoreboardManager().getMainScoreboard();
@@ -251,6 +254,23 @@ public class Commands extends CommandReceiver {
 
     @SubCommand(value = "pool", permission = "sw.command")
     public ItemPoolCommand itemPoolCommand;
+
+    @SubCommand(value = "magnification", permission = "sw.command", tabCompleter = "magnificationCompleter")
+    public void onMagnification(CommandSender sender, Arguments arguments) {
+        double magnification = arguments.nextDouble();
+        Configurations configurations = SnowarsPlugin.plugin.configurations;
+        configurations.magnification = magnification;
+        configurations.save();
+    }
+    public List<String> magnificationCompleter(CommandSender sender, Arguments arguments){
+        List<String> s = new ArrayList<>();
+        switch (arguments.remains()) {
+            case 1:
+                s.add("<magnification>");
+                break;
+        }
+        return filtered(arguments, s);
+    }
 
 //    @SubCommand(value = "", permission = "sw.command", tabCompleter = "Completer")
     public void on(CommandSender sender, Arguments arguments){
@@ -359,11 +379,11 @@ public class Commands extends CommandReceiver {
                 itemStack = ItemManager.getInstance().getItem("normal");
             }
             if (itemStack == null){
-                new Message(I18n.format("producer.define.error_no_item")).send(sender);
+                new Message(I18n.format("producer.define.error_no_item", name)).send(sender);
                 return;
             }
             ProducerManager.getInstance().define(name, capacity, current, productionSpeed, itemStack);
-            new Message(I18n.format("producer.define.success", name)).send(sender);
+            new Message(I18n.format("producer.define.success", name)).append(itemStack).send(sender);
         }
 
         public List<String> defineCompleter(CommandSender sender, Arguments arguments){
@@ -405,7 +425,7 @@ public class Commands extends CommandReceiver {
         public void onAdd(CommandSender sender, Arguments arguments){
             String name = arguments.nextString();
             if (RegionManager.getInstance().contains(name)){
-                new Message(I18n.format("region.add.failed_exists")).send(sender);
+                new Message(I18n.format("region.add.failed_exists", name)).send(sender);
                 return;
             }
             try {
@@ -472,15 +492,15 @@ public class Commands extends CommandReceiver {
             Scoreboard mainScoreboard = SnowarsPlugin.plugin.getServer().getScoreboardManager().getMainScoreboard();
             Team team = mainScoreboard.getTeam(teamName);
             if (regionConf == null){
-                new Message(I18n.format("region.region.error_no_region", regionName)).send(sender);
+                new Message(I18n.format("region.set_team.error_no_region", regionName)).send(sender);
                 return;
             }
             if (team == null){
-                new Message(I18n.format("region.team.error_no_team", teamName)).send(sender);
+                new Message(I18n.format("region.set_team.error_no_team", teamName)).send(sender);
                 return;
             }
             RegionManager.getInstance().setTeam(regionName, team);
-            new Message(I18n.format("region.team.success", regionName, teamName)).send(sender);
+            new Message(I18n.format("region.set_team.success", regionName, teamName)).send(sender);
         }
         public List<String> setTeamCompleter(CommandSender sender, Arguments arguments){
             List<String> s = new ArrayList<>();
@@ -787,7 +807,7 @@ public class Commands extends CommandReceiver {
             @SubCommand(value = "define", permission = "sw.command", tabCompleter = "defineCompleter")
             public void onDefine(CommandSender sender, Arguments arguments) {
                 if (!(sender instanceof Player)) {
-                    new Message("").append(I18n.format("roller.define.error_not_player")).send(sender);
+                    new Message("").append(I18n.format("error.not_player")).send(sender);
                     return;
                 }
                 Block targetBlock = ((Player) sender).getTargetBlock(null, 10);
@@ -813,11 +833,11 @@ public class Commands extends CommandReceiver {
                     return;
                 }
                 if (normalPool == null) {
-                    new Message("").append(I18n.format("roller.define.poll_not_exist", normalPoolName)).send(sender);
+                    new Message("").append(I18n.format("roller.define.pool_not_exist", normalPoolName)).send(sender);
                     return;
                 }
                 if (extraPool == null){
-                    new Message("").append(I18n.format("roller.define.poll_not_exist", normalPoolName)).send(sender);
+                    new Message("").append(I18n.format("roller.define.pool_not_exist", normalPoolName)).send(sender);
                     return;
                 }
                 itemPoolManager.addChest(name, targetBlock, normalPool, extraPool, cost, extraCost);
@@ -851,7 +871,7 @@ public class Commands extends CommandReceiver {
             @SubCommand(value = "remove", permission = "sw.command", tabCompleter = "removeCompleter")
             public void onRemove(CommandSender sender, Arguments arguments) {
                 if (!(sender instanceof Player)) {
-                    new Message("").append(I18n.format("roller.define.error_not_player")).send(sender);
+                    new Message("").append(I18n.format("error.not_player")).send(sender);
                     return;
                 }
                 Block targetBlock = ((Player) sender).getTargetBlock(null, 10);

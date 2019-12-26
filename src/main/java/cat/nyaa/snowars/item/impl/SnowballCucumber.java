@@ -52,7 +52,9 @@ public class SnowballCucumber extends AbstractSnowball {
                 });
         int sc = score.get();
         if (sc > 6) sc = 32;
-        else sc = 1 << Math.max(0, sc - 1);
+        else if (sc != 0){
+            sc = 1 << Math.max(0, sc - 1);
+        }
         sm.addFor(from, sc);
     }
 

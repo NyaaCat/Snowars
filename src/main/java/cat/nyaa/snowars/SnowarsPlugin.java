@@ -40,14 +40,19 @@ public class SnowarsPlugin extends JavaPlugin {
     }
 
     @Override
-    public void onDisable() {
-        super.onDisable();
-        plugin = null;
-        Ticker.getInstance().stop();
+    public void saveConfig() {
+        super.saveConfig();
         ProducerManager.getInstance().save();
         ScoreManager.getInstance().save();
         ItemPoolManager.getInstance().save();
         RegionManager.getInstance().save();
+    }
+
+    @Override
+    public void onDisable() {
+        super.onDisable();
+        plugin = null;
+        Ticker.getInstance().stop();
     }
 
     public void onReload() {

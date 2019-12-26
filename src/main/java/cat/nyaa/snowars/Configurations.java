@@ -19,6 +19,9 @@ public class Configurations extends PluginConfigure {
     @Serializable
     public int bonusSocksInterval = 400;
 
+    @Serializable
+    public double magnification = 1;
+
     @Override
     protected JavaPlugin getPlugin() {
         return SnowarsPlugin.plugin;

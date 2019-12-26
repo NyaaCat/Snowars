@@ -24,8 +24,16 @@ public class BonusSocks extends Producer{
         super.deserialize(config);
     }
 
+
+    int spawnedTick = 0;
+
     @Override
     public void tick(int tick) {
+        if (spawnedTick == 0) spawnedTick = tick;
+        if (spawnedTick > 6000){
+            producerEntity.remove();
+            ProducerManager.getInstance().removeLater(uuid);
+        }
         Location eyeLocation = producerEntity.getLocation();
         float pitch = eyeLocation.getPitch();
         float yaw = eyeLocation.getYaw();
