@@ -48,7 +48,7 @@ public class SnowballCucumber extends AbstractSnowball {
                     Team team = Utils.getTeam(from);
                     Team hitTeam = Utils.getTeam(entity);
                     score.getAndAdd((int) zeroOr(team, hitTeam, 1));
-                    sm.damage(entity, zeroOr(team, hitTeam, getDamage(from, entity, team, hitTeam)));
+                    sm.damage(entity, zeroOr(team, hitTeam, getDamage(from, entity, team, hitTeam)), from, getItem());
                 });
         int sc = score.get();
         if (sc > 6) sc = 32;

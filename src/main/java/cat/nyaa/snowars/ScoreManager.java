@@ -8,6 +8,7 @@ import org.bukkit.Server;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.*;
@@ -101,6 +102,10 @@ public class ScoreManager extends FileConfigure {
 
     public void damage(Entity entity, double damage) {
         HealthUi.getInstance().damage(entity, damage);
+    }
+
+    public void damage(Entity entity, double damage, Entity source, ItemStack item) {
+        HealthUi.getInstance().damage(entity, damage, source, item);
     }
 
     public Collection<? extends String> getPlayers() {

@@ -90,3 +90,11 @@ itemConfigs:
       - '&aHigh Speed item'
     behavior: highspeed
     material: SNOWBALL
+  home:
+    __class__: cat.nyaa.snowars.config.ItemConfigs
+    id: home
+    name: '&a回忆雪球'
+    lore:
+      - §aHome item
+    behavior: home
+    material: SNOWBALL

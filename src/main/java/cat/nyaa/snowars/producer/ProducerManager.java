@@ -162,8 +162,12 @@ public class ProducerManager extends FileConfigure {
     }
 
     public void destroy(Entity toDestroy) {
-        Producer remove = nbtMap.remove(toDestroy.getUniqueId().toString());
-        remove.producerEntity.remove();
+        String uidStr = toDestroy.getScoreboardTags().stream().filter(s -> s.startsWith("snowar_uid")).findAny().orElse(null);
+        if (uidStr != null){
+            String uid = uidStr.split(":")[1];
+            Producer remove = nbtMap.remove(uid);
+            remove.producerEntity.remove();
+        }
     }
 
     public void removeLater(String uuid) {

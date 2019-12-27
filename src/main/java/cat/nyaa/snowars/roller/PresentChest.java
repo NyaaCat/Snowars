@@ -79,7 +79,7 @@ public class PresentChest implements ISerializable {
     private void summonDisplay() {
         World world = block.getLocation().getWorld();
         if (world!=null){
-            Collection<Entity> nearbyEntities = world.getNearbyEntities(block.getLocation(), 5, 5, 5);
+            Collection<Entity> nearbyEntities = world.getNearbyEntities(block.getLocation(), 1, 1, 1);
             nearbyEntities.forEach(entity -> {
                 if (entity.getScoreboardTags().contains("present_message")) {
                     entity.remove();
@@ -183,7 +183,7 @@ public class PresentChest implements ISerializable {
     }
 
     private void updateDisplay() {
-        if (messageDisplay == null) {
+        if (messageDisplay == null || messageDisplay.isDead()) {
             summonDisplay();
         }
         if (messageDisplay != null) {
@@ -265,6 +265,10 @@ public class PresentChest implements ISerializable {
 
     public Block getBlock(){
         return block;
+    }
+
+    public void clear() {
+        costItemAmount = 0;
     }
 
     enum ChestState {

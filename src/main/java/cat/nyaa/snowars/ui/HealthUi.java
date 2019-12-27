@@ -8,12 +8,10 @@ import cat.nyaa.snowars.event.TickTask;
 import cat.nyaa.snowars.event.Ticker;
 import cat.nyaa.snowars.utils.Utils;
 import org.bukkit.ChatColor;
-import org.bukkit.Location;
-import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
-import org.bukkit.potion.PotionEffect;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.Team;
@@ -86,7 +84,7 @@ public class HealthUi {
     private void buildPlayerHealth(Message message, Player poll) {
         double maxHealth = 100d;
         HealthRecord health = healthMap.computeIfAbsent(poll.getUniqueId(), uuid -> new HealthRecord(poll, 100d, 0, 0));
-        if (health.related!=poll){
+        if (health.related != poll) {
             healthMap.put(poll.getUniqueId(), new HealthRecord(poll, health.health, health.damaged, health.lastDamaged));
         }
         double total = maxHealth / 5;
@@ -118,26 +116,32 @@ public class HealthUi {
     }
 
     public void damage(Entity entity, double damage) {
-        damage(entity, damage, null);
+        damage(entity, damage, null, null);
     }
 
-    public void damage(Entity entity, double damage, Entity source) {
+    public void damage(Entity entity, double damage, Entity source, ItemStack item) {
         if (damage <= 0) return;
         UUID uuid = entity.getUniqueId();
         HealthRecord currentHealth = healthMap.computeIfAbsent(uuid, uuid1 -> new HealthRecord(entity, 100d, 0, 0));
-        if (currentHealth.related!=entity){
+        if (currentHealth.related != entity) {
             healthMap.put(entity.getUniqueId(), new HealthRecord(entity, currentHealth.health, currentHealth.damaged, currentHealth.lastDamaged));
         }
-        currentHealth.damage(damage, source);
+        currentHealth.damage(damage, source, item);
         if (entity instanceof LivingEntity) {
             ((LivingEntity) entity).damage(0.01);
             ((LivingEntity) entity).addPotionEffect(PotionEffectType.REGENERATION.createEffect(1, 10));
         }
     }
 
-    private void onPlayerOverdamaged(Entity entity, Entity source) {
-        if (source != null){
-            new Message("").append(Utils.colored(I18n.format("kill_message", source.getName(), entity.getName()))).broadcast();
+    private void onPlayerOverdamaged(Entity entity, Entity source, ItemStack item) {
+        if (source != null) {
+            if (item != null) {
+                String kill_message = I18n.format("kill_message");
+                kill_message = kill_message.replace("{killer.name}", source.getName());
+                kill_message = kill_message.replace("{killer.item}", "{itemName}");
+                kill_message = kill_message.replace("{player.name}", entity.getName());
+                new Message("").append(Utils.colored(kill_message), item).broadcast();
+            }
         }
         Utils.teleportHome(entity, entity.getWorld());
     }
@@ -150,7 +154,7 @@ public class HealthUi {
                 fillPlayerQueue();
             }
             int online = SnowarsPlugin.plugin.getServer().getOnlinePlayers().size();
-            int playersPerTick = Math.max(1, (online / 20)+1);
+            int playersPerTick = Math.max(1, (online / 20) + 1);
             for (int i = 0; i < playersPerTick; i++) {
                 if (playerQueue.isEmpty()) {
                     break;
@@ -194,9 +198,9 @@ public class HealthUi {
             health = Math.min(100d, health + reg);
         }
 
-        public void damage(double damage, Entity source) {
+        public void damage(double damage, Entity source, ItemStack item) {
             if (damage >= health) {
-                onPlayerOverdamaged(related, source);
+                onPlayerOverdamaged(related, source, item);
                 revive(related);
             } else {
                 health -= damage;

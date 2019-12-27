@@ -13,6 +13,7 @@ import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -78,15 +79,19 @@ public class Producer implements ISerializable {
     private void rebuildEntity() {
         try {
             if (producerEntity == null || producerEntity.isDead()) {
-                producerEntity = (LivingEntity) SnowarsPlugin.plugin.getServer().getEntity(UUID.fromString(uuid));
-                World world = SnowarsPlugin.plugin.getServer().getWorld(this.world);
-                if (world == null){
-                    world = SnowarsPlugin.plugin.getServer().getWorlds().get(0);
+                Entity entity = SnowarsPlugin.plugin.getServer().getEntity(UUID.fromString(uuid));
+                if (entity != null && !entity.isDead()) {
+                    producerEntity = (LivingEntity) entity;
+                } else {
+                    World world = SnowarsPlugin.plugin.getServer().getWorld(this.world);
+                    if (world == null) {
+                        world = SnowarsPlugin.plugin.getServer().getWorlds().get(0);
+                    }
+                    Location location = new Location(world, locationX, locationY, locationZ, (float) locationYaw, (float) locationPitch);
+                    LivingEntity producerEntity = ProducerManager.getInstance().summonEntity(location, uuid);
+                    this.producerEntity = producerEntity;
+                    uuid = producerEntity.getUniqueId().toString();
                 }
-                Location location = new Location(world, locationX, locationY, locationZ, (float) locationYaw, (float) locationPitch);
-                LivingEntity producerEntity = ProducerManager.getInstance().summonEntity(location, uuid);
-                this.producerEntity = producerEntity;
-                uuid = producerEntity.getUniqueId().toString();
             } else {
                 Location location = producerEntity.getLocation();
                 uuid = producerEntity.getUniqueId().toString();
@@ -106,7 +111,7 @@ public class Producer implements ISerializable {
         }
     }
 
-    public void clear(){
+    public void clear() {
         current = 0;
         updateName();
     }
@@ -143,7 +148,7 @@ public class Producer implements ISerializable {
         current = Math.min(product, capacity);
         if (tick % 5 == 0) {
             updateName();
-            if (tick%200 == 0){
+            if (tick % 200 == 0) {
                 rebuildEntity();
             }
         }

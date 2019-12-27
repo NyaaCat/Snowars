@@ -148,4 +148,8 @@ public class ItemPoolManager extends FileConfigure {
     public boolean hasPoolChest(String name) {
         return presentChestMap.containsKey(name);
     }
+
+    public Collection<PresentChest> getChests() {
+        return presentChestMap.values();
+    }
 }

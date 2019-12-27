@@ -8,6 +8,7 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Projectile;
 import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.Team;
 
@@ -23,4 +24,5 @@ public interface SnowballHandler {
     default void tick(){}
     void registerDelayedEvent(Entity from, Entity related, int delay, BukkitRunnable runnable, Predicate<DelayedTriggerEvent> flag);
     void registerTickEvent(Entity from, Entity related, TickTask tickTask);
+    ItemStack getItem();
 }

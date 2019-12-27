@@ -132,6 +132,6 @@ public class SnowballMine extends AbstractSnowball {
 
     @Override
     public double getDamage(Entity fromEntity, Entity hitEntity, Team from, Team hit) {
-        return zeroOr(from, hit, 10);
+        return zeroOr(from, hit, 5);
     }
 }

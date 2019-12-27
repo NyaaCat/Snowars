@@ -13,6 +13,7 @@ import com.google.common.cache.CacheBuilder;
 import org.bukkit.*;
 import org.bukkit.entity.*;
 import org.bukkit.event.entity.ProjectileHitEvent;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.material.MaterialData;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -81,8 +82,9 @@ public abstract class AbstractSnowball implements SnowballHandler {
         instance.addFor(from, hitScore);
         double damageAmplifier = SnowarsPlugin.plugin.configurations.damageAmplifier;
         double damage = getDamage(from, hit, fromTeam, hitTeam);
-        instance.damage(hit, damage * damageAmplifier);
-        if (!hitCooldown){
+        ItemStack item = getItem();
+        instance.damage(hit, damage * damageAmplifier, from, item);
+        if (damage > 0 && !hitCooldown){
             hitCooldown = true;
             World world = from.getWorld();
             Location location = hit.getLocation();
@@ -91,9 +93,9 @@ public abstract class AbstractSnowball implements SnowballHandler {
             new BukkitRunnable() {
                 @Override
                 public void run() {
-                    hitCooldown = true;
+                    hitCooldown = false;
                 }
-            }.runTaskLater(SnowarsPlugin.plugin, 20);
+            }.runTaskLater(SnowarsPlugin.plugin, 10);
         }
     }
 
@@ -118,6 +120,11 @@ public abstract class AbstractSnowball implements SnowballHandler {
     @Override
     public void registerTickEvent(Entity from, Entity related, TickTask tickTask) {
         Ticker.getInstance().register(tickTask);
+    }
+
+    @Override
+    public ItemStack getItem() {
+        return ItemManager.getInstance().getItem(this);
     }
 
     public boolean isNormal(){

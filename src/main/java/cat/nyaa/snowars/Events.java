@@ -66,6 +66,10 @@ public class Events implements Listener {
         if (action == Action.PHYSICAL || im == Material.AIR) return;
         if (!(action == Action.RIGHT_CLICK_AIR || action == Action.RIGHT_CLICK_BLOCK))
             return;
+        Block targetBlock = player.getTargetBlock(null, 10);
+        if (targetBlock.getType().equals(Material.CHEST)){
+            return;
+        }
         ItemManager itemManager = ItemManager.getInstance();
         ItemStack is = event.getItem();
         Optional<AbstractSnowball> item = itemManager.getItem(is);

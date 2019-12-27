@@ -6,6 +6,7 @@ import cat.nyaa.snowars.SnowarsPlugin;
 import cat.nyaa.snowars.config.ItemConfigs;
 import org.bukkit.ChatColor;
 import org.bukkit.NamespacedKey;
+import org.bukkit.entity.Entity;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
@@ -23,11 +24,13 @@ public class ItemManager {
     private Map<String, AbstractSnowball> snowballMap;
     private Map<String, ItemStack> itemStackMap;
     private Map<String, Class<? extends AbstractSnowball>> behaviorMap;
+    private Map<AbstractSnowball, String> snowballItemNameMap;
 
     private ItemManager() {
         snowballMap = new HashMap<>();
         itemStackMap = new HashMap<>();
         behaviorMap = new HashMap<>();
+        snowballItemNameMap = new HashMap<>();
     }
 
     public static ItemManager getInstance() {
@@ -38,6 +41,7 @@ public class ItemManager {
         buildBehaviors();
         Map<String, AbstractSnowball> snowballMap = getInstance().snowballMap;
         Map<String, ItemStack> itemStackMap = getInstance().itemStackMap;
+        Map<AbstractSnowball, String> snowballItemNameMap = getInstance().snowballItemNameMap;
         snowballMap.clear();
         itemStackMap.clear();
         configurations.itemConfigs.forEach((s, ic) -> {
@@ -53,6 +57,7 @@ public class ItemManager {
             }
             snowballMap.put(s, snowball);
             itemStackMap.put(s, itemStack);
+            snowballItemNameMap.put(snowball, s);
         });
     }
 
@@ -97,5 +102,10 @@ public class ItemManager {
 
     public Collection<? extends String> getItemNames() {
         return itemStackMap.keySet();
+    }
+
+    public ItemStack getItem(AbstractSnowball abstractSnowball) {
+        String s = snowballItemNameMap.get(abstractSnowball);
+        return s == null? null : itemStackMap.get(s);
     }
 }

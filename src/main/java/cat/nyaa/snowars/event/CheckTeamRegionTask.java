@@ -1,7 +1,6 @@
 package cat.nyaa.snowars.event;
 
 import cat.nyaa.snowars.SnowarsPlugin;
-import cat.nyaa.snowars.config.RegionConfig;
 import cat.nyaa.snowars.ui.HealthUi;
 import cat.nyaa.snowars.utils.RegionManager;
 import org.bukkit.Location;
