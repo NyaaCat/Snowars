@@ -67,7 +67,7 @@ public class SnowballPigeon extends AbstractSnowball {
         }
         if (score<=min.get()){
             PotionEffect effect = PotionEffectType.SPEED.createEffect(30, 3);
-            world.playSound(hit.getLocation(), Sound.ENTITY_SPLASH_POTION_BREAK, 10, 1);
+            world.playSound(hit.getLocation(), Sound.ENTITY_SPLASH_POTION_BREAK, 5, 1);
             ((LivingEntity) hit).addPotionEffect(effect, true);
         }
 

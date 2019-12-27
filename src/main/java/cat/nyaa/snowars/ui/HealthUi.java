@@ -1,6 +1,7 @@
 package cat.nyaa.snowars.ui;
 
 import cat.nyaa.nyaacore.Message;
+import cat.nyaa.snowars.I18n;
 import cat.nyaa.snowars.ScoreManager;
 import cat.nyaa.snowars.SnowarsPlugin;
 import cat.nyaa.snowars.event.TickTask;
@@ -85,6 +86,9 @@ public class HealthUi {
     private void buildPlayerHealth(Message message, Player poll) {
         double maxHealth = 100d;
         HealthRecord health = healthMap.computeIfAbsent(poll.getUniqueId(), uuid -> new HealthRecord(poll, 100d, 0, 0));
+        if (health.related!=poll){
+            healthMap.put(poll.getUniqueId(), new HealthRecord(poll, health.health, health.damaged, health.lastDamaged));
+        }
         double total = maxHealth / 5;
         int barCount = (int) Math.ceil(health.health / 5);
         message.append(colored("&c&lHEALTH "));
@@ -114,17 +118,27 @@ public class HealthUi {
     }
 
     public void damage(Entity entity, double damage) {
+        damage(entity, damage, null);
+    }
+
+    public void damage(Entity entity, double damage, Entity source) {
         if (damage <= 0) return;
         UUID uuid = entity.getUniqueId();
         HealthRecord currentHealth = healthMap.computeIfAbsent(uuid, uuid1 -> new HealthRecord(entity, 100d, 0, 0));
-        currentHealth.damage(damage);
+        if (currentHealth.related!=entity){
+            healthMap.put(entity.getUniqueId(), new HealthRecord(entity, currentHealth.health, currentHealth.damaged, currentHealth.lastDamaged));
+        }
+        currentHealth.damage(damage, source);
         if (entity instanceof LivingEntity) {
             ((LivingEntity) entity).damage(0.01);
             ((LivingEntity) entity).addPotionEffect(PotionEffectType.REGENERATION.createEffect(1, 10));
         }
     }
 
-    private void onPlayerOverdamaged(Entity entity) {
+    private void onPlayerOverdamaged(Entity entity, Entity source) {
+        if (source != null){
+            new Message("").append(Utils.colored(I18n.format("kill_message", source.getName(), entity.getName()))).broadcast();
+        }
         Utils.teleportHome(entity, entity.getWorld());
     }
 
@@ -136,7 +150,7 @@ public class HealthUi {
                 fillPlayerQueue();
             }
             int online = SnowarsPlugin.plugin.getServer().getOnlinePlayers().size();
-            int playersPerTick = Math.max(1, online / 20);
+            int playersPerTick = Math.max(1, (online / 20)+1);
             for (int i = 0; i < playersPerTick; i++) {
                 if (playerQueue.isEmpty()) {
                     break;
@@ -180,9 +194,9 @@ public class HealthUi {
             health = Math.min(100d, health + reg);
         }
 
-        public void damage(double damage) {
+        public void damage(double damage, Entity source) {
             if (damage >= health) {
-                onPlayerOverdamaged(related);
+                onPlayerOverdamaged(related, source);
                 revive(related);
             } else {
                 health -= damage;

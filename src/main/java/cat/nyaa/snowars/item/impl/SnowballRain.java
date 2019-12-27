@@ -22,7 +22,7 @@ public class SnowballRain extends AbstractSnowball {
         double x = towards.getX();
         double z = towards.getZ();
         towards.setY(Math.sqrt(x * x + z * z));
-        from.getWorld().playSound(from.getLocation(), Sound.ENTITY_SNOWBALL_THROW, 10, 0.5f);
+        from.getWorld().playSound(from.getLocation(), Sound.ENTITY_SNOWBALL_THROW, 5, 0.5f);
         Projectile projectile = launchSnowball(this, from, null, towards, 1, 1.5, true);
         registerDelayedEvent(from, projectile, 20, new BukkitRunnable() {
             @Override
@@ -40,7 +40,7 @@ public class SnowballRain extends AbstractSnowball {
         Utils.removeNow(projectile);
         Vector downDirection = Utils.y_axis.clone().multiply(-1);
         from.getWorld().spawnParticle(Particle.CLOUD, location, 100, 0.5, 0.5, 0.5, 0.1);
-        from.getWorld().playSound(location, Sound.ENTITY_GENERIC_EXPLODE, 10, 1.5f);
+        from.getWorld().playSound(location, Sound.ENTITY_GENERIC_EXPLODE, 5, 1.5f);
         registerTickEvent(from, projectile, new TickTask( tickEvent -> tickEvent.getTicksFromStarted() > 100) {
             @Override
             public void run(int ticks) {
@@ -50,7 +50,7 @@ public class SnowballRain extends AbstractSnowball {
                 vector.rotateAroundAxis(Utils.y_axis, Math.toRadians(theta));
                 Location add = location.clone().add(vector);
                 if (ticks % 5 == 0) {
-                    from.getWorld().playSound(location, Sound.ENTITY_SNOWBALL_THROW, 10, 1.5f);
+                    from.getWorld().playSound(location, Sound.ENTITY_SNOWBALL_THROW, 5 ,1.5f);
                 }
                 Projectile projectile1 = launchSnowball(SnowballRain.this, from, add, downDirection, 1, 0.8, true);
                 projectile1.addScoreboardTag("rain");

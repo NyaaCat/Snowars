@@ -7,6 +7,7 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import org.bukkit.*;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
@@ -16,10 +17,7 @@ import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
 import org.bukkit.util.Vector;
 
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -131,12 +129,12 @@ public class Utils {
             new BukkitRunnable() {
                 @Override
                 public void run() {
-                    world1.playSound(finalBedSpawnLocation, Sound.ENTITY_ENDERMAN_TELEPORT, 10, 1);
+                    world1.playSound(finalBedSpawnLocation, Sound.ENTITY_ENDERMAN_TELEPORT, 5, 1);
                     world1.spawnParticle(Particle.PORTAL, finalBedSpawnLocation, 500, 0, 0, 0, 1);
                 }
             }.runTaskLater(SnowarsPlugin.plugin, 1);
         }
-        world.playSound(originLocation, Sound.ENTITY_ENDERMAN_TELEPORT, 10, 1);
+        world.playSound(originLocation, Sound.ENTITY_ENDERMAN_TELEPORT, 5, 1);
         world.spawnParticle(Particle.PORTAL, originLocation, 500, 0, 0, 0, 1);
     }
 
@@ -187,17 +185,51 @@ public class Utils {
         World world = SnowarsPlugin.plugin.getServer().getWorld(region.world);
         if (world == null) return null;
         int xRange = region.xMax - region.xMin;
+        int yRange = region.yMax - region.yMin;
         int zRange = region.zMax - region.zMin;
         Location selected = null;
         for (int i = 0; i < 20; i++) {
             int dX = (int) (random() * xRange);
+            int dy = (int) (random() * (yRange/2));
             int dZ = (int) (random() * zRange);
-            Block highestBlockAt = world.getHighestBlockAt(region.xMin + dX, region.zMin + dZ);
-            if (highestBlockAt.getY() < region.yMax) {
-                selected = highestBlockAt.getLocation().add(0.5, 1, 0.5);
+            Location location = new Location(world, region.xMin + dX, region.yMin + dy, region.zMin + dZ);
+            Location validSpawnLocationInY = findValidSpawnLocationInY(location);
+            if (validSpawnLocationInY != null) {
+                selected = validSpawnLocationInY.clone().add(0.5, 1, 0.5);
                 break;
             }
         }
         return selected;
+    }
+
+    private static Location findValidSpawnLocationInY(Location targetLocation) {
+        for (int j = 0; j > -20; j--) {
+            Location clone = targetLocation.clone().add(0, j, 0);
+            if (isValidLocation(clone)) {
+                return clone;
+            }
+        }
+        for (int j = 0; j < 10; j++) {
+            Location clone = targetLocation.clone().add(0, j, 0);
+            if (isValidLocation(clone)) {
+                return clone;
+            }
+        }
+        return null;
+    }
+
+    private static boolean isValidLocation(Location targetLocation) {
+        Block block = targetLocation.getBlock();
+        Block lowerBlock = block.getRelative(BlockFace.DOWN);
+        Block upperBlock = block.getRelative(BlockFace.UP);
+        return !block.getType().isSolid() && !upperBlock.getType().isSolid() && ((lowerBlock.getType().isSolid() || block.getType().equals(Material.WATER)));
+    }
+
+    public static Team chooseTeam() {
+        Scoreboard mainScoreboard = SnowarsPlugin.plugin.getServer().getScoreboardManager().getMainScoreboard();
+        Set<Team> teams = mainScoreboard.getTeams();
+        Team team = teams.stream().min(Comparator.comparingInt(Team::getSize))
+                .orElse(null);
+        return team;
     }
 }

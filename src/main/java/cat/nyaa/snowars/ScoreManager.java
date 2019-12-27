@@ -10,7 +10,7 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.scoreboard.Team;
+import org.bukkit.scoreboard.*;
 
 import java.util.*;
 
@@ -54,7 +54,8 @@ public class ScoreManager extends FileConfigure {
 
         if (teamName != null) {
             double teamScore = teamScoreMap.computeIfAbsent(teamName, team1 -> 0d);
-            teamScoreMap.put(teamName, teamScore + hitScore);
+//            teamScoreMap.put(teamName, teamScore + hitScore);
+            updateTeamScore(getTeamKey(team), teamScore + hitScore);
         }
     }
 
@@ -121,7 +122,8 @@ public class ScoreManager extends FileConfigure {
         Team team = Utils.getTeam(player);
         String teamKey = getTeamKey(team);
         if (teamScoreMap.containsKey(teamKey)) {
-            teamScoreMap.put(teamKey, teamScoreMap.get(teamKey) - val);
+//            teamScoreMap.put(teamKey, teamScoreMap.get(teamKey) - val);
+            updateTeamScore(getTeamKey(team), teamScoreMap.computeIfAbsent(teamKey, s -> 0d) - val);
         }
     }
 
@@ -135,7 +137,8 @@ public class ScoreManager extends FileConfigure {
         String teamName = getTeamKey(team);
         Set<String> entries = team.getEntries();
         double teamScore = teamScoreMap.computeIfAbsent(teamName, s -> 0d);
-        teamScoreMap.put(teamName, 0d);
+//        teamScoreMap.put(teamName, 0d);
+        updateTeamScore(getTeamKey(team), 0d);
         HashMap<String, OfflinePlayer> playerHashMap = new HashMap<>();
 
         entries.forEach(s -> {
@@ -163,6 +166,15 @@ public class ScoreManager extends FileConfigure {
     public void clearAll() {
         scoreMap.clear();
         teamScoreMap.clear();
+        Scoreboard mainScoreboard = SnowarsPlugin.plugin.getServer().getScoreboardManager().getMainScoreboard();
+        Set<String> entries = mainScoreboard.getEntries();
+        Objective objective = mainScoreboard.getObjective("snowar_teamsc");
+        if (objective != null) {
+            entries.forEach(s -> {
+                Score score = objective.getScore(s);
+                score.setScore(0);
+            });
+        }
     }
 
     public double getScore(String s) {
@@ -189,8 +201,29 @@ public class ScoreManager extends FileConfigure {
         if (team != null) {
             double diff = v - originalScore;
             Double originalTeamScore = teamScoreMap.computeIfAbsent(getTeamKey(team), s -> 0d);
-            teamScoreMap.put(getTeamKey(team), originalTeamScore + diff);
+//            teamScoreMap.put(getTeamKey(team), originalTeamScore + diff);
+            updateTeamScore(getTeamKey(team), originalTeamScore + diff);
         }
+    }
+
+    private void updateTeamScore(String teamKey, double v) {
+        teamScoreMap.put(teamKey, v);
+        Scoreboard mainScoreboard = SnowarsPlugin.plugin.getServer().getScoreboardManager().getMainScoreboard();
+        Objective objective = mainScoreboard.getObjective("snowar_teamsc");
+        if (objective == null) {
+            objective = mainScoreboard.registerNewObjective("snowar_teamsc", "dummy", Utils.colored(I18n.format("team_score")), RenderType.INTEGER);
+            objective.setDisplaySlot(DisplaySlot.SIDEBAR);
+            Objective finalObjective = objective;
+            teamScoreMap.forEach((s, aDouble) -> {
+                Score score = finalObjective.getScore(s);
+                score.setScore((int) Math.floor(aDouble));
+            });
+        }
+        if (!objective.getDisplayName().equals(Utils.colored(I18n.format("team_score")))) {
+            objective.setDisplayName(Utils.colored(I18n.format("team_score")));
+        }
+        Score score = objective.getScore(teamKey);
+        score.setScore((int) Math.floor(v));
     }
 
     public boolean isGoldExperienced(Entity from) {

@@ -17,12 +17,13 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.scoreboard.Team;
 
 import java.util.UUID;
 import java.util.logging.Level;
 
 public class Producer implements ISerializable {
+    @Serializable
+    String uuidKey = "";
     @Serializable
     String uuid;
     @Serializable
@@ -34,12 +35,33 @@ public class Producer implements ISerializable {
     @Serializable
     String item = "";
 
+    @Serializable
+    String world = "";
+    @Serializable
+    double locationX = 0;
+    @Serializable
+    double locationY = 0;
+    @Serializable
+    double locationZ = 0;
+    @Serializable
+    double locationYaw = 0;
+    @Serializable
+    double locationPitch = 0;
+
     private ItemStack itemCache = null;
     LivingEntity producerEntity;
 
     public Producer(LivingEntity spawn, ProducerConfig producerConfig) {
         producerEntity = spawn;
+        uuidKey = spawn.getUniqueId().toString();
         uuid = spawn.getUniqueId().toString();
+        world = spawn.getWorld().getName();
+        Location location = spawn.getLocation();
+        locationX = location.getX();
+        locationY = location.getY();
+        locationZ = location.getZ();
+        locationYaw = location.getYaw();
+        locationPitch = location.getPitch();
         updateConfig(producerConfig);
         updateName();
     }
@@ -50,12 +72,43 @@ public class Producer implements ISerializable {
     @Override
     public void deserialize(ConfigurationSection config) {
         ISerializable.deserialize(config, this);
+        rebuildEntity();
+    }
+
+    private void rebuildEntity() {
         try {
-            producerEntity = (LivingEntity) SnowarsPlugin.plugin.getServer().getEntity(UUID.fromString(uuid));
+            if (producerEntity == null || producerEntity.isDead()) {
+                producerEntity = (LivingEntity) SnowarsPlugin.plugin.getServer().getEntity(UUID.fromString(uuid));
+                World world = SnowarsPlugin.plugin.getServer().getWorld(this.world);
+                if (world == null){
+                    world = SnowarsPlugin.plugin.getServer().getWorlds().get(0);
+                }
+                Location location = new Location(world, locationX, locationY, locationZ, (float) locationYaw, (float) locationPitch);
+                LivingEntity producerEntity = ProducerManager.getInstance().summonEntity(location, uuid);
+                this.producerEntity = producerEntity;
+                uuid = producerEntity.getUniqueId().toString();
+            } else {
+                Location location = producerEntity.getLocation();
+                uuid = producerEntity.getUniqueId().toString();
+                this.world = producerEntity.getWorld().getName();
+                locationX = location.getX();
+                locationY = location.getY();
+                locationZ = location.getZ();
+                locationYaw = location.getYaw();
+                locationPitch = location.getPitch();
+            }
+            producerEntity.addScoreboardTag("snowar_producer");
+            producerEntity.addScoreboardTag("snowar_uid:" + uuidKey);
+            updateName();
         } catch (Exception e) {
             SnowarsPlugin.plugin.getLogger().log(Level.INFO, String.format("no entity found for producer, removing."));
             ProducerManager.getInstance().removeLater(uuid);
         }
+    }
+
+    public void clear(){
+        current = 0;
+        updateName();
     }
 
     public void updateConfig(ProducerConfig producerConfig) {
@@ -67,7 +120,7 @@ public class Producer implements ISerializable {
 
     protected void updateName() {
         if (producerEntity.isDead()) {
-            ProducerManager.getInstance().removeLater(uuid);
+            rebuildEntity();
             return;
         }
         producerEntity.setCustomName(Utils.colored(getName()));
@@ -79,17 +132,20 @@ public class Producer implements ISerializable {
 
     public void tick(int tick) {
         double magnification = SnowarsPlugin.plugin.configurations.magnification;
-        if (producerEntity == null){
-            ProducerManager.getInstance().removeLater(uuid);
+        if (producerEntity == null) {
+            rebuildEntity();
             return;
         }
         if (producerEntity.getWorld().hasStorm()) {
             magnification += 1;
         }
-        double product =  (current + magnification *(snowballPerSec / 20));
+        double product = (current + magnification * (snowballPerSec / 20));
         current = Math.min(product, capacity);
         if (tick % 5 == 0) {
             updateName();
+            if (tick%200 == 0){
+                rebuildEntity();
+            }
         }
     }
 

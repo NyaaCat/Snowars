@@ -40,7 +40,7 @@ public class ItemPoolManager extends FileConfigure {
     Map<String, ItemPool> itemPoolMap = new LinkedHashMap<>();
     @Serializable
     Map<String, PresentChest> presentChestMap = new LinkedHashMap<>();
-    Map<Inventory, PresentChest> inventoryMap = new LinkedHashMap<>();
+    Map<Block, PresentChest> inventoryMap = new LinkedHashMap<>();
 
     @Override
     public void deserialize(ConfigurationSection config) {
@@ -48,7 +48,7 @@ public class ItemPoolManager extends FileConfigure {
         presentChestMap.values().forEach(presentChest -> {
             Inventory chestInventory = presentChest.getChestInventory();
             if (chestInventory != null) {
-                inventoryMap.put(chestInventory, presentChest);
+                inventoryMap.put(presentChest.getBlock(), presentChest);
             }
         });
     }
@@ -59,7 +59,7 @@ public class ItemPoolManager extends FileConfigure {
             Inventory blockInventory = ((Chest) state).getBlockInventory();
             PresentChest presentChest = new PresentChest(chestBlock, itemPool, extraPool, cost, extraCost);
             presentChestMap.put(name, presentChest);
-            inventoryMap.put(blockInventory, presentChest);
+            inventoryMap.put(presentChest.getBlock(), presentChest);
         }
         save();
     }
@@ -95,12 +95,12 @@ public class ItemPoolManager extends FileConfigure {
         return itemPoolMap.get(itemPoolName);
     }
 
-    public boolean isPoolChest(Inventory inventory) {
-        return inventoryMap.containsKey(inventory) && inventoryMap.get(inventory).isValid();
+    public boolean isPoolChest(Block block) {
+        return inventoryMap.containsKey(block) && inventoryMap.get(block).isValid();
     }
 
-    public PresentChest getChest(Inventory inventory) {
-        return inventoryMap.get(inventory);
+    public PresentChest getChest(Block block) {
+        return inventoryMap.get(block);
     }
 
     public void createPool(String name) {
@@ -130,8 +130,8 @@ public class ItemPoolManager extends FileConfigure {
         return itemMap.keySet();
     }
 
-    public String removePoolChest(Inventory blockInventory) {
-        PresentChest presentChest = inventoryMap.get(blockInventory);
+    public String removePoolChest(Block block) {
+        PresentChest presentChest = inventoryMap.get(block);
         if (presentChest == null)return null;
         Map.Entry<String, PresentChest> stringPresentChestEntry = presentChestMap.entrySet().stream().filter(entry -> entry.getValue() == presentChest)
                 .findAny().orElse(null);
@@ -139,7 +139,7 @@ public class ItemPoolManager extends FileConfigure {
             String key = stringPresentChestEntry.getKey();
             presentChestMap.remove(key);
             presentChest.removeDisplay();
-            inventoryMap.remove(blockInventory);
+            inventoryMap.remove(block);
             return key;
         }
         return null;

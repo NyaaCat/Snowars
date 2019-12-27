@@ -79,7 +79,9 @@ public abstract class AbstractSnowball implements SnowballHandler {
         double hitScore = getHitScore(from, hit, fromTeam, hitTeam);
         ScoreManager instance = ScoreManager.getInstance();
         instance.addFor(from, hitScore);
-        instance.damage(hit, getDamage(from, hit, fromTeam, hitTeam));
+        double damageAmplifier = SnowarsPlugin.plugin.configurations.damageAmplifier;
+        double damage = getDamage(from, hit, fromTeam, hitTeam);
+        instance.damage(hit, damage * damageAmplifier);
         if (!hitCooldown){
             hitCooldown = true;
             World world = from.getWorld();

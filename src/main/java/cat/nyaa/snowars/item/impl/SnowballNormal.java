@@ -17,7 +17,7 @@ public class SnowballNormal extends AbstractSnowball {
     public boolean onUse(LivingEntity from, PlayerInteractEvent event) {
         launchSnowball(this, from, null, from.getEyeLocation().getDirection(), 1, 1.5d, true);
         Location soundLocation = from.getEyeLocation();
-        from.getWorld().playSound(soundLocation, Sound.ENTITY_SNOWBALL_THROW, 10, 0.5f);
+        from.getWorld().playSound(soundLocation, Sound.ENTITY_SNOWBALL_THROW, 5, 0.5f);
         return true;
     }
 

@@ -34,21 +34,21 @@ public class SnowballGolden extends AbstractSnowball {
                 public void run(int ticked) {
                     if (ticked == 1) {
                         new Message(ChatColor.translateAlternateColorCodes('&', "&e&l黄            ")).send(((Player) from), Message.MessageType.SUBTITLE);
-                        world.playSound(from.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 10, 1);
+                        world.playSound(from.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 5, 1);
                         return;
                     }
                     if (ticked == 20) {
                         new Message(ChatColor.translateAlternateColorCodes('&', "&e&l黄  金        ")).send(((Player) from), Message.MessageType.SUBTITLE);
-                        world.playSound(from.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 10, 1);
+                        world.playSound(from.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 5, 1);
                         return;
                     }
                     if (ticked == 40) {
                         new Message(ChatColor.translateAlternateColorCodes('&', "&e&l黄  金  体    ")).send(((Player) from), Message.MessageType.SUBTITLE);
-                        world.playSound(from.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 10, 1);
+                        world.playSound(from.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 5, 1);
                         return;
                     }
                     if (ticked == 60) {
-                        world.playSound(from.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 10, 2);
+                        world.playSound(from.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 5, 2);
                         new Message(ChatColor.translateAlternateColorCodes('&', "&e&l黄  金  体  验")).send(((Player) from), Message.MessageType.SUBTITLE);
                     }
                 }

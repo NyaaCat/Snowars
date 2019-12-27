@@ -18,10 +18,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 public class PresentChest implements ISerializable {
     private Block block;
@@ -42,8 +39,6 @@ public class PresentChest implements ISerializable {
     String blockWorld = "";
     @Serializable
     ChestState state = ChestState.READY;
-    @Serializable
-    String displayUid;
     @Serializable
     int cost = 4;
     @Serializable
@@ -78,15 +73,20 @@ public class PresentChest implements ISerializable {
         ItemPoolManager instance = ItemPoolManager.getInstance();
         itemPool = instance.getPool(itemPoolName);
         extraPool = instance.getPool(extraPoolName);
-        messageDisplay = SnowarsPlugin.plugin.getServer().getEntity(UUID.fromString(displayUid));
-        if (messageDisplay == null) {
-            summonDisplay();
-        }
+        summonDisplay();
     }
 
     private void summonDisplay() {
+        World world = block.getLocation().getWorld();
+        if (world!=null){
+            Collection<Entity> nearbyEntities = world.getNearbyEntities(block.getLocation(), 5, 5, 5);
+            nearbyEntities.forEach(entity -> {
+                if (entity.getScoreboardTags().contains("present_message")) {
+                    entity.remove();
+                }
+            });
+        }
         messageDisplay = Utils.summonNameDisplay(block.getLocation().add(0.5, 0.8, 0.5));
-        displayUid = messageDisplay.getUniqueId().toString();
         messageDisplay.addScoreboardTag("present_message");
         updateDisplay();
     }
@@ -144,7 +144,7 @@ public class PresentChest implements ISerializable {
                                 addOrDropItem(rollResult);
                             }
 
-                            while (amount[0] > minCost) {
+                            while (amount[0] >= minCost) {
                                 ItemStack rollResult = itemPool.rollItem();
                                 if (rollResult == null) {
                                     break;
@@ -155,7 +155,7 @@ public class PresentChest implements ISerializable {
                             World world = block.getWorld();
                             Location location = block.getLocation().add(0.5, 0.5, 0.5);
                             world.spawnParticle(Particle.CLOUD, location, 200, 0, 0, 0, 0.1);
-                            world.playSound(location, Sound.UI_TOAST_CHALLENGE_COMPLETE, 10, 2);
+                            world.playSound(location, Sound.UI_TOAST_CHALLENGE_COMPLETE, 5, 2);
                             state = ChestState.FINISHED;
                             updateDisplay();
                         }
@@ -183,6 +183,9 @@ public class PresentChest implements ISerializable {
     }
 
     private void updateDisplay() {
+        if (messageDisplay == null) {
+            summonDisplay();
+        }
         if (messageDisplay != null) {
             String message = messageDisplay.getCustomName();
             switch (state) {
@@ -253,11 +256,15 @@ public class PresentChest implements ISerializable {
     }
 
     private void closeLooking() {
-        chestInventory.getViewers().forEach(HumanEntity::closeInventory);
+        new ArrayList<>(chestInventory.getViewers()).forEach(HumanEntity::closeInventory);
     }
 
     public void removeDisplay() {
         messageDisplay.remove();
+    }
+
+    public Block getBlock(){
+        return block;
     }
 
     enum ChestState {

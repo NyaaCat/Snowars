@@ -1,6 +1,7 @@
 package cat.nyaa.snowars.producer;
 
 import cat.nyaa.nyaacore.configuration.FileConfigure;
+import cat.nyaa.nyaacore.configuration.ISerializable;
 import cat.nyaa.snowars.I18n;
 import cat.nyaa.snowars.SnowarsPlugin;
 import cat.nyaa.snowars.config.ProducerConfig;
@@ -9,6 +10,7 @@ import cat.nyaa.snowars.event.TickTask;
 import cat.nyaa.snowars.event.Ticker;
 import cat.nyaa.snowars.utils.Utils;
 import org.bukkit.*;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.*;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.LeatherArmorMeta;
@@ -34,19 +36,11 @@ public class ProducerManager extends FileConfigure {
 
     private Map<String, BonusSocks> socksMap;
 
-    private Map<String, Entity> bonusEntityMap;
-
     @Serializable
     Map<String, ProducerConfig> configMap;
 
     public Producer summonProducer(Location location, ProducerConfig producerConfig) {
-        World world = location.getWorld();
-        if (world == null) return null;
-        Snowman spawn1 = world.spawn(location, Snowman.class, snowman -> {
-            snowman.setAI(false);
-            snowman.setCustomNameVisible(true);
-            snowman.setInvulnerable(true);
-        });
+        LivingEntity spawn1 = summonEntity(location, null);
 //        ArmorStand spawn = world.spawn(location, ArmorStand.class, armorStand -> {
 //            armorStand.setHelmet(new ItemStack(Material.SNOWBALL));
 //            armorStand.setInvulnerable(true);
@@ -60,6 +54,17 @@ public class ProducerManager extends FileConfigure {
         Producer producer = new Producer(spawn1, producerConfig);
         register(producer);
         return producer;
+    }
+
+    public LivingEntity summonEntity(Location location, String uid) {
+        World world = location.getWorld();
+        if (world == null) return null;
+        Snowman spawn1 = world.spawn(location, Snowman.class, snowman -> {
+            snowman.setAI(false);
+            snowman.setCustomNameVisible(true);
+            snowman.setInvulnerable(true);
+        });
+        return spawn1;
     }
 
     public Collection<? extends String> getConfigNames() {
@@ -92,7 +97,14 @@ public class ProducerManager extends FileConfigure {
         nbtMap = new HashMap<>();
         configMap = new LinkedHashMap<>();
         socksMap = new LinkedHashMap<>();
-        bonusEntityMap = new LinkedHashMap<>();
+    }
+
+    @Override
+    public void deserialize(ConfigurationSection config) {
+        ISerializable.deserialize(config, this);
+        nbtMap.forEach((s,producer) ->{
+            producer.uuidKey = s;
+        });
     }
 
     @Override
@@ -117,11 +129,18 @@ public class ProducerManager extends FileConfigure {
     }
 
     public boolean isProducer(Entity rightClicked) {
-        return nbtMap.containsKey(rightClicked.getUniqueId().toString()) || socksMap.containsKey(rightClicked.getUniqueId().toString());
+        return rightClicked.getScoreboardTags().contains("snowar_producer") || nbtMap.containsKey(rightClicked.getUniqueId().toString()) || socksMap.containsKey(rightClicked.getUniqueId().toString());
     }
 
     public Producer getProducer(Entity rightClicked) {
         Producer producer = nbtMap.get(rightClicked.getUniqueId().toString());
+        if (producer == null){
+            String uidStr = rightClicked.getScoreboardTags().stream().filter(s -> s.startsWith("snowar_uid")).findAny().orElse(null);
+            if (uidStr != null){
+                String uid = uidStr.split(":")[1];
+                producer = nbtMap.get(uid);
+            }
+        }
         if (producer == null) {
             producer = socksMap.get(rightClicked.getUniqueId().toString());
         }
@@ -129,7 +148,7 @@ public class ProducerManager extends FileConfigure {
     }
 
     public void start() {
-        if (!stopped){
+        if (!stopped) {
             stop();
         }
         stopped = false;
@@ -208,6 +227,14 @@ public class ProducerManager extends FileConfigure {
             chicken.addScoreboardTag("lucky_entity");
         });
         Utils.removeLater(spawn, 6000);
+    }
+
+    public Collection<Producer> getProducers() {
+        return nbtMap.values();
+    }
+
+    public void clearSocks() {
+        socksMap.clear();
     }
 
     public class ProducerTask extends TickTask {

@@ -10,6 +10,7 @@ import cat.nyaa.snowars.config.ProducerConfig;
 import cat.nyaa.snowars.config.RegionConfig;
 import cat.nyaa.snowars.event.AutoSpawnTask;
 import cat.nyaa.snowars.item.ItemManager;
+import cat.nyaa.snowars.producer.Producer;
 import cat.nyaa.snowars.producer.ProducerManager;
 import cat.nyaa.snowars.roller.ItemPool;
 import cat.nyaa.snowars.roller.ItemPoolManager;
@@ -33,10 +34,12 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class Commands extends CommandReceiver {
@@ -257,16 +260,32 @@ public class Commands extends CommandReceiver {
                     .filter(player -> Utils.getTeam(player) != null).collect(Collectors.toList());
             teleportPlayers(collect);
             clearBackpack(collect);
+            clearTaggedEntities(world);
+            Collection<Producer> producers = ProducerManager.getInstance().getProducers();
+            producers.forEach(Producer::clear);
             Message title = new Message("").append(ChatColor.translateAlternateColorCodes('&', I18n.format("title.game_start")));
             players.forEach(player -> title.send(player, Message.MessageType.TITLE));
         }
+    }
+
+    private void clearTaggedEntities(World world) {
+        String [] tags = {"temp_snow", "bonus_socks", "lucky_entity"};
+        world.getEntities().stream().filter(entity -> {
+            boolean b = false;
+            Set<String> scoreboardTags = entity.getScoreboardTags();
+            for (int i = 0; i < tags.length; i++) {
+                b = b || scoreboardTags.contains(tags[i]);
+            }
+            return b;
+        }).forEach(Entity::remove);
+        ProducerManager.getInstance().clearSocks();
     }
 
     private void clearBackpack(List<Player> collect) {
         collect.forEach(player -> player.getInventory().clear());
     }
 
-    @SubCommand(value = "stop", permission = "sw.command")
+    @SubCommand(value = "stop", permission = "sw.command", tabCompleter = "stopCompleter")
     public void onStop(CommandSender sender, Arguments arguments) {
         producerCommand.onStop(sender, arguments);
         World world = null;
@@ -276,10 +295,54 @@ public class Commands extends CommandReceiver {
             world = ((BlockCommandSender) sender).getBlock().getWorld();
         }
         if (world != null) {
+            RegionConfig region = null;
+            if (arguments.top()!= null){
+                String s = arguments.nextString();
+                region = RegionManager.getInstance().getRegion(s);
+                if (region == null){
+                    new Message("").append(I18n.format("stop.error_no_region", s)).send(sender);
+                    return;
+                }
+            }
             List<Player> players = world.getPlayers();
             Message title = new Message("").append(ChatColor.translateAlternateColorCodes('&', I18n.format("title.game_stop")));
             players.forEach(player -> title.send(player, Message.MessageType.TITLE));
+            clearTaggedEntities(world);
+            if (region != null){
+               RegionConfig finalRegion = region;
+               players.forEach(player -> teleportPlayers(players, finalRegion));
+            }
         }
+    }
+
+    private void teleportPlayers(List<Player> players, RegionConfig finalRegion) {
+        AtomicInteger integer = new AtomicInteger(0);
+        players.forEach(player -> {
+            if (finalRegion != null) {
+                new BukkitRunnable(){
+                    @Override
+                    public void run() {
+                        for (int i = 0; i < 20; i++) {
+                            Location location = Utils.randomLocation(finalRegion.region);
+                            if (location != null) {
+                                player.teleport(location);
+                                break;
+                            }
+                        }
+                    }
+                }.runTaskLater(SnowarsPlugin.plugin, integer.getAndAdd(1));
+            }
+        });
+    }
+
+    public List<String> stopCompleter(CommandSender sender, Arguments arguments) {
+        List<String> s = new ArrayList<>();
+        switch (arguments.remains()) {
+            case 1:
+                s.addAll(RegionManager.getInstance().getRegionNames());
+                break;
+        }
+        return filtered(arguments, s);
     }
 
     private void teleportPlayers(List<Player> world) {
@@ -306,6 +369,25 @@ public class Commands extends CommandReceiver {
     @SubCommand(value = "pool", permission = "sw.command")
     public ItemPoolCommand itemPoolCommand;
 
+    @SubCommand(value = "join", permission = "sw.command")
+    public void onJoin(CommandSender sender, Arguments arguments) {
+        Player player = arguments.nextPlayer();
+        Team team = Utils.getTeam(player);
+        if (team == null){
+            Team selected = Utils.chooseTeam();
+            if (selected != null){
+                selected.addEntry(player.getName());
+                Utils.teleportHome(player, player.getWorld());
+                new Message("").append(I18n.format("join.success", player.getName(), selected.getName())).send(sender);
+            }else {
+                new Message("").append(I18n.format("join.failed_no_team")).send(sender);
+            }
+        }else {
+            Utils.teleportHome(player, player.getWorld());
+        }
+    }
+
+
     @SubCommand(value = "magnification", permission = "sw.command", tabCompleter = "magnificationCompleter")
     public void onMagnification(CommandSender sender, Arguments arguments) {
         double magnification = arguments.nextDouble();
@@ -313,6 +395,15 @@ public class Commands extends CommandReceiver {
         configurations.magnification = magnification;
         configurations.save();
     }
+
+    @SubCommand(value = "damageAmplifier", permission = "sw.command")
+    public void onDamageAmplifier(CommandSender sender, Arguments arguments) {
+        double magnification = arguments.nextDouble();
+        Configurations configurations = SnowarsPlugin.plugin.configurations;
+        configurations.damageAmplifier = magnification;
+        configurations.save();
+    }
+
 
     public List<String> magnificationCompleter(CommandSender sender, Arguments arguments) {
         List<String> s = new ArrayList<>();
@@ -906,7 +997,7 @@ public class Commands extends CommandReceiver {
                     new Message("").append(I18n.format("roller.define.failed_exists", name)).send(sender);
                     return;
                 }
-                if (itemPoolManager.isPoolChest(((Chest) targetBlock.getState()).getBlockInventory())) {
+                if (itemPoolManager.isPoolChest(targetBlock)) {
                     new Message("").append(I18n.format("roller.define.failed_exists", name)).send(sender);
                     return;
                 }
@@ -954,8 +1045,8 @@ public class Commands extends CommandReceiver {
                 }
                 Block targetBlock = ((Player) sender).getTargetBlock(null, 10);
                 BlockState state = targetBlock.getState();
-                if (state instanceof Chest && ItemPoolManager.getInstance().isPoolChest(((Chest) state).getBlockInventory())) {
-                    String removed = ItemPoolManager.getInstance().removePoolChest(((Chest) state).getBlockInventory());
+                if (state instanceof Chest && ItemPoolManager.getInstance().isPoolChest(targetBlock)) {
+                    String removed = ItemPoolManager.getInstance().removePoolChest(targetBlock);
                     if (removed != null) {
                         new Message("").append(I18n.format("roller.remove.success", removed)).send(sender);
                     } else {

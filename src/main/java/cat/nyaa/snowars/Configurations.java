@@ -22,6 +22,9 @@ public class Configurations extends PluginConfigure {
     @Serializable
     public double magnification = 1;
 
+    @Serializable
+    public double damageAmplifier = 1;
+
     @Override
     protected JavaPlugin getPlugin() {
         return SnowarsPlugin.plugin;
