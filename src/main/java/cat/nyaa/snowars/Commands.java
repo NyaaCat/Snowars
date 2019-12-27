@@ -1,5 +1,9 @@
 package cat.nyaa.snowars;
 
+import cat.nyaa.musicapi.api.IMusicSheet;
+import cat.nyaa.musicapi.api.IMusicTask;
+import cat.nyaa.musicapi.api.MusicLoader;
+import cat.nyaa.musicapi.player.MusicPlayer;
 import cat.nyaa.nyaacore.ILocalizer;
 import cat.nyaa.nyaacore.Message;
 import cat.nyaa.nyaacore.cmdreceiver.Arguments;
@@ -9,11 +13,14 @@ import cat.nyaa.nyaacore.utils.InventoryUtils;
 import cat.nyaa.snowars.config.ProducerConfig;
 import cat.nyaa.snowars.config.RegionConfig;
 import cat.nyaa.snowars.event.AutoSpawnTask;
+import cat.nyaa.snowars.item.AbstractSnowball;
 import cat.nyaa.snowars.item.ItemManager;
 import cat.nyaa.snowars.producer.Producer;
 import cat.nyaa.snowars.producer.ProducerManager;
 import cat.nyaa.snowars.roller.ItemPool;
 import cat.nyaa.snowars.roller.ItemPoolManager;
+import cat.nyaa.snowars.roller.PresentChest;
+import cat.nyaa.snowars.ui.HealthUi;
 import cat.nyaa.snowars.utils.RegionManager;
 import cat.nyaa.snowars.utils.Utils;
 import com.google.common.util.concurrent.AtomicDouble;
@@ -38,7 +45,9 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
 
+import java.io.IOException;
 import java.util.*;
+import java.io.File;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -58,6 +67,7 @@ public class Commands extends CommandReceiver {
         producerCommand = new ProducerCommand(SnowarsPlugin.plugin, this.i18N);
         regionCommand = new RegionCommand(SnowarsPlugin.plugin, this.i18N);
         itemPoolCommand = new ItemPoolCommand(SnowarsPlugin.plugin, this.i18N);
+        debugCommand = new DebugCommand(SnowarsPlugin.plugin, this.i18N);
     }
 
     @Override
@@ -170,7 +180,6 @@ public class Commands extends CommandReceiver {
                 String teamName = arguments.nextString();
                 Team team = mainScoreboard.getTeam(teamName);
                 if (team != null) {
-                    new Message("").append(I18n.format("score.check.team.success", teamName)).send(sender);
                     AtomicDouble sc = new AtomicDouble(0);
                     team.getEntries().forEach(s -> {
                         double score1 = scoreManager.getScore(s);
@@ -262,6 +271,8 @@ public class Commands extends CommandReceiver {
             clearBackpack(collect);
             clearTaggedEntities(world);
             Collection<Producer> producers = ProducerManager.getInstance().getProducers();
+            Collection<PresentChest> chests = ItemPoolManager.getInstance().getChests();
+            chests.forEach(presentChest -> presentChest.clear());
             producers.forEach(Producer::clear);
             Message title = new Message("").append(ChatColor.translateAlternateColorCodes('&', I18n.format("title.game_start")));
             players.forEach(player -> title.send(player, Message.MessageType.TITLE));
@@ -368,6 +379,9 @@ public class Commands extends CommandReceiver {
 
     @SubCommand(value = "pool", permission = "sw.command")
     public ItemPoolCommand itemPoolCommand;
+
+    @SubCommand(value = "debug", permission = "sw.command")
+    public DebugCommand debugCommand;
 
     @SubCommand(value = "join", permission = "sw.command")
     public void onJoin(CommandSender sender, Arguments arguments) {
@@ -1065,6 +1079,54 @@ public class Commands extends CommandReceiver {
             @Override
             public String getHelpPrefix() {
                 return null;
+            }
+        }
+
+        @Override
+        public String getHelpPrefix() {
+            return null;
+        }
+    }
+
+    public static class DebugCommand extends CommandReceiver{
+        /**
+         * @param plugin for logging purpose only
+         * @param _i18n
+         */
+        public DebugCommand(Plugin plugin, ILocalizer _i18n) {
+            super(plugin, _i18n);
+        }
+
+        @SubCommand(value = "kill", permission = "sw.command")
+        public void onKill(CommandSender sender, Arguments arguments){
+            String from = arguments.nextString();
+            String died = arguments.nextString();
+            if (sender instanceof Player) {
+                World world = ((Player) sender).getWorld();
+                Server server = sender.getServer();
+                Player diedPlayer = server.getPlayer(died);
+                Player fromPlayer = server.getPlayer(from);
+                ItemStack itemInMainHand = ((Player) sender).getInventory().getItemInMainHand();
+                Optional<AbstractSnowball> item = ItemManager.getInstance().getItem(itemInMainHand);
+                if (item.isPresent()) {
+                    ItemStack item1 = item.get().getItem();
+                    HealthUi.getInstance().damage(diedPlayer, 100, fromPlayer, item1);
+                }
+            }
+        }
+
+        @SubCommand(value = "goldenwind", permission = "sw.command")
+        public void onGoldenWind(CommandSender sender, Arguments arguments){
+            if (sender instanceof Player) {
+                Location location = ((Player) sender).getLocation();
+                File file = new File(SnowarsPlugin.plugin.getDataFolder(), "golden_wind.trak");
+                try {
+                    IMusicSheet iMusicSheet = MusicLoader.loadFromFile(file);
+                    IMusicTask play = new MusicPlayer().play(iMusicSheet, (Entity) sender);
+                    play.play(SnowarsPlugin.plugin);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
 
